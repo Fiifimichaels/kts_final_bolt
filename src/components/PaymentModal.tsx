@@ -174,7 +174,20 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
               display_name: "Primary Passenger",
               variable_name: "primary_passenger",
               value: primaryPassenger.fullName
-            }
+            },
+            // Add passenger details
+            ...passengers.map((passenger, index) => [
+              {
+                display_name: `Passenger ${index + 1} Name`,
+                variable_name: `passenger_${index + 1}_name`,
+                value: passenger.fullName
+              },
+              {
+                display_name: `Passenger ${index + 1} Phone`,
+                variable_name: `passenger_${index + 1}_phone`,
+                value: passenger.phone
+              }
+            ]).flat()
           ]
         },
         onSuccess: async (transaction: any) => {
