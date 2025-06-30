@@ -42,5 +42,18 @@
     "typescript-eslint": "^8.3.0",
     "vite": "^5.4.2",
     "vitest": "^3.2.4"
-  }
+  },
+  "description": "",
+  "main": "eslint.config.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Fiifimichaels/kts_final_bolt.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Fiifimichaels/kts_final_bolt/issues"
+  },
+  "homepage": "https://github.com/Fiifimichaels/kts_final_bolt#readme"
 }
