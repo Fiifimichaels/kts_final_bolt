@@ -262,73 +262,39 @@ const BookingForm: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 flex items-center justify-center p-4">
+      <div className="min-h-screen flex items-center justify-center p-4">
         <div className="text-center space-y-4">
-          <div className="flex items-center justify-center gap-3">
-            <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-            <span className="text-lg text-gray-600">
-              Loading booking system
-              <span className="bouncing-dots">
-                <span className="dot">.</span>
-                <span className="dot">.</span>
-                <span className="dot">.</span>
-              </span>
-            </span>
-          </div>
-          <div className="relative pt-4">
-            <div className="h-1.5 w-48 bg-blue-100 rounded-full mx-auto overflow-hidden">
-              <div className="w-full h-full bg-blue-600 rounded-full origin-left animate-progress"></div>
-            </div>
-          </div>
-          <p className="text-sm text-gray-500 mt-4">
-            This may take a few moments. Please don't close this page.
+          <Loader2 className="w-16 h-16 animate-spin text-blue-600 mx-auto" />
+          <h2 className="text-xl font-semibold text-gray-900">
+            Loading Booking System
+          </h2>
+          <p className="text-gray-600 max-w-md mx-auto">
+            Preparing your booking experience...
           </p>
         </div>
-        <style jsx>{`
-          @keyframes progress {
-            from { transform: scaleX(0); }
-            to { transform: scaleX(1); }
-          }
-          .animate-progress {
-            animation: progress 2s ease-in-out infinite;
-          }
-          .bouncing-dots {
-            display: inline-block;
-          }
-          .bouncing-dots .dot {
-            display: inline-block;
-            animation: bounce 0.8s infinite;
-          }
-          .bouncing-dots .dot:nth-child(2) {
-            animation-delay: 0.2s;
-          }
-          .bouncing-dots .dot:nth-child(3) {
-            animation-delay: 0.4s;
-          }
-          @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-3px); }
-          }
-        `}</style>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full text-center">
-          <div className="bg-red-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="text-center space-y-4">
+          <div className="bg-red-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto">
             <AlertCircle className="w-8 h-8 text-red-600" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Connection Error</h1>
-          <p className="text-gray-600 mb-6">{error}</p>
+          <h1 className="text-2xl font-bold text-gray-900">Connection Error</h1>
+          <p className="text-gray-600 max-w-md mx-auto">{error}</p>
           <button
             onClick={() => window.location.reload()}
-            className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+            className="mt-4 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 mx-auto"
           >
-            Retry
+            <Loader2 className="w-4 h-4 animate-spin" />
+            Retry Connection
           </button>
+          <p className="text-sm text-gray-500 mt-4">
+            If this persists, please contact support at +233 243 762 748
+          </p>
         </div>
       </div>
     );

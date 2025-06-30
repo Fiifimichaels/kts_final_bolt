@@ -61,7 +61,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     try {
       for (const bookingId of bookingIds) {
         const { error } = await supabase
-          .from('bus_bookings')
+          .from('bookings')
           .update({
             payment_status: status,
             payment_reference: reference,
@@ -87,7 +87,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       
       for (const bookingId of bookingIds) {
         const { data: bookingData, error: bookingError } = await supabase
-          .from('bus_bookings')
+          .from('bookings')
           .select(`
             *,
             pickup_point:pickup_points(name),
@@ -146,7 +146,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     setIsProcessing(true);
     setError(null);
     
-    const reference = `group_booking_${bookingIds[0].slice(0, 8)}_${Date.now()}`;
+    const reference = `KTS_${bookingIds[0].slice(0, 8)}_${Date.now()}`;
     
     try {
       const handler = window.PaystackPop.setup({
@@ -156,9 +156,10 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
         currency: 'GHS',
         reference: reference,
         metadata: {
-          booking_ids: bookingIds.join(','),
+          booking_id: bookingIds[0],
           customer_name: primaryPassenger.fullName,
           passenger_count: passengers.length,
+          primary_passenger: primaryPassenger.fullName,
           custom_fields: [
             {
               display_name: "Booking Type",

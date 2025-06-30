@@ -18,6 +18,8 @@ interface PaystackConfig {
   metadata?: {
     booking_id: string;
     customer_name: string;
+    passenger_count: number;
+    primary_passenger: string;
     custom_fields?: Array<{
       display_name: string;
       variable_name: string;

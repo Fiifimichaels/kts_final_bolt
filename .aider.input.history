@@ -910,3 +910,51 @@
 
 # 2025-06-29 18:50:18.178043
 +payment is complete and i got a successful message from paystack but it is has been processsing for a long time
+
+# 2025-06-30 00:56:43.791207
++Y
+
+# 2025-06-30 00:58:05.631334
++Loading in the BookingForm.tsx takes too long. fix it
+
+# 2025-06-30 00:58:08.781203
++Y
+
+# 2025-06-30 01:00:57.707549
++fix toggleSeatAvailiability, createDestination and createPickupPoint in AdminDashboard.tsx
+
+# 2025-06-30 01:01:01.823303
++Y
+
+# 2025-06-30 01:05:07.198474
++fix `updateBookingStatus` 
+
+# 2025-06-30 01:13:02.142999
++add delete to pickup and `Destination` in the admin `dashboard`. in the overview, total booking must give the number of pending and approve same to the others. wheher approved
+
+# 2025-06-30 01:16:21.832890
++fix errors in the `AdminDashboard.tsx'
+
+# 2025-06-30 01:22:40.585271
++page keeks lagging or loading Nothing is displaying
+
+# 2025-06-30 01:41:58.367567
++`deleteDestination` and `deletePickupPoint` funtion is not working and the error in PaymentModal.tsx
+
+# 2025-06-30 01:42:03.340566
++Y
+
+# 2025-06-30 01:47:48.123798
++add passengers name and number to the paystackconfig and `Transaction`
+
+# 2025-06-30 02:05:43.663190
++retreive the `PickupPoint` and `Destination` data from the database and display in admin page
+
+# 2025-06-30 02:48:32.550674
++add delete to `PickupPoint` and `Destination` and also rejected to the dashboard activity tab and any error in src\components\AdminLogin.tsx and src\contexts\AppContext.tsx 
+
+# 2025-06-30 02:48:35.416847
++A
+
+# 2025-06-30 02:53:16.642252
++the delete buttons should delete and work on the toggle `SeatStatus` in `AdminDashboard.tsx

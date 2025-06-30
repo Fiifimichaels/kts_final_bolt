@@ -32,6 +32,47 @@ import {
 } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import { supabase } from '../lib/supabase';
+// 在现有 import 语句之后添加这些接口定义
+interface BusBooking {
+  id: string;
+  full_name: string;
+  email: string;
+  phone: string;
+  class: string;
+  pickup_point?: PickupPoint;
+  destination?: Destination;
+  seat_number: number;
+  amount?: number;
+  status: 'pending' | 'approved' | 'cancelled';
+  payment_reference?: string;
+  payment_status: string;
+  departure_date?: string;
+  booking_date: string;
+  updated_at: string;
+  contact_person_name?: string;
+  contact_person_phone?: string;
+}
+
+interface SeatStatus {
+  id: string;
+  seat_number: number;
+  is_available: boolean;
+  passenger_name?: string;
+}
+
+interface PickupPoint {
+  id: string;
+  name: string;
+  active: boolean;
+}
+
+interface Destination {
+  id: string;
+  name: string;
+  price: number;
+  active: boolean;
+}
+
 
 interface EditingItem {
   id: string;
@@ -83,21 +124,26 @@ const AdminDashboard: React.FC = () => {
       setLoading(true);
       try {
         // Fetch all data in parallel
-        const [
-          { data: bookingsData },
-          { data: seatData },
-          { data: pickupData },
-          { data: destinationsData },
-          adminInfo,
-          activities
-        ] = await Promise.all([
-          supabase.from('bookings').select('*').order('created_at', { ascending: false }),
-          supabase.from('seat_status').select('*'),
-          supabase.from('pickup_points').select('*'),
-          supabase.from('destinations').select('*'),
-          fetchAdminInfo(),
-          fetchActivities()
-        ]);
+    const [
+      { data: bookingsData },
+      { data: seatData },
+      { data: pickupData },
+      { data: destinationsData },
+      adminInfo,
+      activities
+    ] = await Promise.all([
+      supabase.from('bookings').select(`
+        *,
+        pickup_point:pickup_points(*),
+        destination:destinations(*)
+      `).order('created_at', { ascending: false }),
+      supabase.from('seat_status').select('*'),
+      supabase.from('pickup_points').select('*'),
+      supabase.from('destinations').select('*'),
+      fetchAdminInfo(),
+      fetchActivities()
+    ]);
+
 
         setBookings(bookingsData || []);
         setSeatStatus(seatData || []);
@@ -235,6 +281,131 @@ const AdminDashboard: React.FC = () => {
       setActionLoading(null);
     }
   };
+
+  // 在 handleRejectBooking 函数之后添加这些函数实现
+const updateBookingStatus = async (id: string, status: 'cancelled') => {
+  const { error } = await supabase
+    .from('bookings')
+    .update({ status })
+    .eq('id', id);
+
+  if (error) throw error;
+  
+  setBookings(prev => prev.map(b => 
+    b.id === id ? { ...b, status } : b
+  ));
+};
+
+const updatePickupPoint = async (id: string, data: { name: string }) => {
+  const { error } = await supabase
+    .from('pickup_points')
+    .update(data)
+    .eq('id', id);
+
+  if (error) throw error;
+  
+  setPickupPoints(prev => prev.map(p => 
+    p.id === id ? { ...p, ...data } : p
+  ));
+};
+
+const updateDestination = async (id: string, data: { name: string; price: number }) => {
+  const { error } = await supabase
+    .from('destinations')
+    .update(data)
+    .eq('id', id);
+
+  if (error) throw error;
+  
+  setDestinations(prev => prev.map(d => 
+    d.id === id ? { ...d, ...data } : d
+  ));
+};
+
+const createPickupPoint = async (data: { name: string }) => {
+  const { data: newPoint, error } = await supabase
+    .from('pickup_points')
+    .insert([{ ...data, active: true }])
+    .select()
+    .single();
+
+  if (error) throw error;
+  
+  if (newPoint) {
+    setPickupPoints(prev => [...prev, newPoint]);
+  }
+};
+
+const createDestination = async (data: { name: string; price: number }) => {
+  const { data: newDestination, error } = await supabase
+    .from('destinations')
+    .insert([{ ...data, active: true }])
+    .select()
+    .single();
+
+  if (error) throw error;
+  
+  if (newDestination) {
+    setDestinations(prev => [...prev, newDestination]);
+  }
+};
+
+const toggleSeatAvailability = async (seatNumber: number) => {
+  const seat = seatStatus.find(s => s.seat_number === seatNumber);
+  if (!seat) throw new Error('Seat not found');
+
+  const { error } = await supabase
+    .from('seat_status')
+    .update({ is_available: !seat.is_available })
+    .eq('seat_number', seatNumber);
+
+  if (error) throw error;
+  
+  setSeatStatus(prev => prev.map(s => 
+    s.seat_number === seatNumber 
+      ? { ...s, is_available: !s.is_available }
+      : s
+  ));
+};
+
+const deletePickupPoint = async (id: string) => {
+  if (confirm('Are you sure you want to delete this pickup point?')) {
+    try {
+      const { error } = await supabase
+        .from('pickup_points')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        console.error('Supabase error:', error); // 添加这行
+        throw error;
+      }
+      
+      setPickupPoints(prev => prev.filter(p => p.id !== id));
+      await logActivity('PICKUP_POINT_DELETED', `Deleted pickup point`, { pickup_point_id: id });
+    } catch (error) {
+      alert('Failed to delete pickup point');
+    }
+  }
+};
+
+const deleteDestination = async (id: string) => {
+  if (confirm('Are you sure you want to delete this destination?')) {
+    try {
+      const { error } = await supabase
+        .from('destinations')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      setDestinations(prev => prev.filter(d => d.id !== id));
+      await logActivity('DESTINATION_DELETED', `Deleted destination`, { destination_id: id });
+    } catch (error) {
+      alert('Failed to delete destination');
+    }
+  }
+};
 
   const handleDeleteBooking = async (id: string) => {
     if (confirm('Are you sure you want to delete this booking?')) {
