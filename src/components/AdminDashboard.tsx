@@ -638,6 +638,7 @@ const deleteDestination = async (id: string) => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Departure</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -689,6 +690,47 @@ const deleteDestination = async (id: string) => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {seat.booking?.departure_date ? new Date(seat.booking.departure_date).toLocaleDateString() : 'N/A'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                      {seat.booking?.status === 'pending' && (
+                        <>
+                          <button
+                            onClick={() => seat.booking && handleApproveBooking(seat.booking.id)}
+                            disabled={actionLoading === seat.booking?.id}
+                            className="text-green-600 hover:text-green-900 disabled:opacity-50"
+                          >
+                            {actionLoading === seat.booking?.id ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <CheckCircle className="w-4 h-4" />
+                            )}
+                          </button>
+                          <button
+                            onClick={() => seat.booking && handleRejectBooking(seat.booking.id)}
+                            disabled={actionLoading === seat.booking?.id}
+                            className="text-red-600 hover:text-red-900 disabled:opacity-50"
+                          >
+                            {actionLoading === seat.booking?.id ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <XCircle className="w-4 h-4" />
+                            )}
+                          </button>
+                        </>
+                      )}
+                      {seat.booking && (
+                        <button
+                          onClick={() => handleDeleteBooking(seat.booking!.id)}
+                          disabled={actionLoading === seat.booking?.id}
+                          className="text-red-600 hover:text-red-900 disabled:opacity-50"
+                        >
+                          {actionLoading === seat.booking?.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="w-4 h-4" />
+                          )}
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
