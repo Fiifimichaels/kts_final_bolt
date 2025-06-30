@@ -16,7 +16,7 @@ import {
   MapPin,
   Navigation,
   DollarSign,
-  ToggleLeft,
+  ToggleLeft, 
   ToggleRight,
   Save,
   X,
@@ -32,6 +32,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import { supabase } from '../lib/supabase';
+import type { BusBooking, SeatStatus, PickupPoint, Destination } from '../types/database';
 
 interface EditingItem {
   id: string;
@@ -60,7 +61,7 @@ interface ActivityLog {
 const AdminDashboard: React.FC = () => {
   const { logout } = useApp();
   const [bookings, setBookings] = useState<BusBooking[]>([]);
-  const [seatStatus, setSeatStatus] = useState<SeatStatus[]>([]);
+  const [seatStatus, setSeatStatus] = useState<SeatStatus[]>([] as SeatStatus[]);
   const [pickupPoints, setPickupPoints] = useState<PickupPoint[]>([]);
   const [destinations, setDestinations] = useState<Destination[]>([]);
   const [loading, setLoading] = useState(true);
@@ -91,7 +92,9 @@ const AdminDashboard: React.FC = () => {
           adminInfo,
           activities
         ] = await Promise.all([
-          supabase.from('bookings').select('*').order('created_at', { ascending: false }),
+          supabase.from('bookings')
+            .select('*, pickup_point(*), destination(*)')
+            .order('created_at', { ascending: false }),
           supabase.from('seat_status').select('*'),
           supabase.from('pickup_points').select('*'),
           supabase.from('destinations').select('*'),
