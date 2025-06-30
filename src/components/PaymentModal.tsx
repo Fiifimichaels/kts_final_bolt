@@ -156,7 +156,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
         currency: 'GHS',
         reference: reference,
         metadata: {
-          booking_ids: bookingIds.join(','),
+          booking_ids: bookingIds, // ✅ assuming bookingIds is already a string[]
           customer_name: primaryPassenger.fullName,
           passenger_count: passengers.length,
           custom_fields: [

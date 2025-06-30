@@ -16,8 +16,9 @@ interface PaystackConfig {
   currency?: string;
   reference: string;
   metadata?: {
-    booking_id: string;
+    booking_ids?: string[]; // corrected to be plural and an array
     customer_name: string;
+    passenger_count?: number;
     custom_fields?: Array<{
       display_name: string;
       variable_name: string;
