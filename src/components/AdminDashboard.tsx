@@ -81,31 +81,53 @@ const AdminDashboard: React.FC = () => {
   // Fetch admin info and activities
   useEffect(() => {
     const fetchData = async () => {
-      setLoading(true);
       try {
-        // Fetch all data in parallel
+        setLoading(true);
+        // Fetch all data in parallel with error handling for each request
         const [
-          { data: bookingsData },
-          { data: seatData },
-          { data: pickupData },
-          { data: destinationsData },
-          adminInfo,
-          activities
+          bookingsResponse,
+          seatResponse,
+          pickupResponse,
+          destinationsResponse,
+          adminResponse,
+          activitiesResponse
         ] = await Promise.all([
           supabase.from('bookings')
             .select('*, pickup_point(*), destination(*)')
-            .order('created_at', { ascending: false }),
-          supabase.from('seat_status').select('*'),
-          supabase.from('pickup_points').select('*'),
-          supabase.from('destinations').select('*'),
-          fetchAdminInfo(),
-          fetchActivities()
+            .order('created_at', { ascending: false })
+            .then(res => {
+              if (res.error) throw res.error;
+              return res;
+            }),
+          supabase.from('seat_status').select('*')
+            .then(res => {
+              if (res.error) throw res.error;
+              return res;
+            }),
+          supabase.from('pickup_points').select('*')
+            .then(res => {
+              if (res.error) throw res.error;
+              return res;
+            }),
+          supabase.from('destinations').select('*')
+            .then(res => {
+              if (res.error) throw res.error;
+              return res;
+            }),
+          fetchAdminInfo().catch(error => {
+            console.error('Admin info fetch error:', error);
+            return null;
+          }),
+          fetchActivities().catch(error => {
+            console.error('Activities fetch error:', error);
+            return [];
+          })
         ]);
 
-        setBookings(bookingsData || []);
-        setSeatStatus(seatData || []);
-        setPickupPoints(pickupData || []);
-        setDestinations(destinationsData || []);
+        setBookings(bookingsResponse.data || []);
+        setSeatStatus(seatResponse.data || []);
+        setPickupPoints(pickupResponse.data || []);
+        setDestinations(destinationsResponse.data || []);
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
@@ -1429,11 +1451,19 @@ const AdminDashboard: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="flex items-center gap-3">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-          <span className="text-lg text-gray-600">Loading dashboard...</span>
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center space-y-4">
+        <Loader2 className="w-16 h-16 animate-spin text-blue-600" />
+        <h2 className="text-xl font-semibold text-gray-900">Loading Admin Dashboard</h2>
+        <p className="text-gray-600 max-w-md text-center">
+          Loading transportation data, bookings, and system configuration...
+        </p>
+        <div className="h-1.5 w-48 bg-blue-100 rounded-full overflow-hidden">
+          <div className="w-full h-full bg-blue-600 animate-progress origin-left" 
+               style={{animation: 'progress 2s ease-in-out infinite'}} />
         </div>
+        <p className="text-sm text-gray-500 mt-4">
+          This may take a moment. Please don't close this page.
+        </p>
       </div>
     );
   }
