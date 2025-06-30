@@ -181,26 +181,12 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
           console.log('Payment successful:', transaction);
           
           try {
-            // Update bookings first
-            // Update backend first
             await updateBookingsPaymentStatus(transaction.reference, 'completed');
-            
-            // Then update UI state before sending receipts
             setPaymentDetails(transaction);
             setPaymentSuccess(true);
+            setIsProcessing(false);
             
-            // Send receipts in background
-            sendBookingReceipts(transaction).finally(() => {
-              setIsProcessing(false);
-              
-              // Small delay for smooth transition
-              setTimeout(() => {
-                const iframe = document.querySelector('iframe[src*="paystack"]');
-                if (iframe) {
-                  (iframe.parentNode?.parentNode as HTMLElement)?.style.removeProperty('display');
-                }
-              }, 500);
-            });
+            await sendBookingReceipts(transaction);
             
           } catch (error) {
             console.error('Error processing successful payment:', error);
@@ -215,8 +201,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
         },
         onClose: () => {
           console.log('Payment modal closed');
-          // Ensure processing state clears even if Paystack modal hangs
-          setTimeout(() => setIsProcessing(false), 2000);
+          setIsProcessing(false);
         },
       });
 
