@@ -16,7 +16,7 @@ import {
   MapPin,
   Navigation,
   DollarSign,
-  ToggleLeft, 
+  ToggleLeft,
   ToggleRight,
   Save,
   X,
@@ -32,7 +32,6 @@ import {
 } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import { supabase } from '../lib/supabase';
-import type { BusBooking, SeatStatus, PickupPoint, Destination } from '../types/database';
 
 interface EditingItem {
   id: string;
@@ -61,7 +60,7 @@ interface ActivityLog {
 const AdminDashboard: React.FC = () => {
   const { logout } = useApp();
   const [bookings, setBookings] = useState<BusBooking[]>([]);
-  const [seatStatus, setSeatStatus] = useState<SeatStatus[]>([] as SeatStatus[]);
+  const [seatStatus, setSeatStatus] = useState<SeatStatus[]>([]);
   const [pickupPoints, setPickupPoints] = useState<PickupPoint[]>([]);
   const [destinations, setDestinations] = useState<Destination[]>([]);
   const [loading, setLoading] = useState(true);
@@ -81,53 +80,29 @@ const AdminDashboard: React.FC = () => {
   // Fetch admin info and activities
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true);
       try {
-        setLoading(true);
-        // Fetch all data in parallel with error handling for each request
+        // Fetch all data in parallel
         const [
-          bookingsResponse,
-          seatResponse,
-          pickupResponse,
-          destinationsResponse,
-          adminResponse,
-          activitiesResponse
+          { data: bookingsData },
+          { data: seatData },
+          { data: pickupData },
+          { data: destinationsData },
+          adminInfo,
+          activities
         ] = await Promise.all([
-          supabase.from('bookings')
-            .select('*, pickup_point(*), destination(*)')
-            .order('created_at', { ascending: false })
-            .then(res => {
-              if (res.error) throw res.error;
-              return res;
-            }),
-          supabase.from('seat_status').select('*')
-            .then(res => {
-              if (res.error) throw res.error;
-              return res;
-            }),
-          supabase.from('pickup_points').select('*')
-            .then(res => {
-              if (res.error) throw res.error;
-              return res;
-            }),
-          supabase.from('destinations').select('*')
-            .then(res => {
-              if (res.error) throw res.error;
-              return res;
-            }),
-          fetchAdminInfo().catch(error => {
-            console.error('Admin info fetch error:', error);
-            return null;
-          }),
-          fetchActivities().catch(error => {
-            console.error('Activities fetch error:', error);
-            return [];
-          })
+          supabase.from('bookings').select('*').order('created_at', { ascending: false }),
+          supabase.from('seat_status').select('*'),
+          supabase.from('pickup_points').select('*'),
+          supabase.from('destinations').select('*'),
+          fetchAdminInfo(),
+          fetchActivities()
         ]);
 
-        setBookings(bookingsResponse.data || []);
-        setSeatStatus(seatResponse.data || []);
-        setPickupPoints(pickupResponse.data || []);
-        setDestinations(destinationsResponse.data || []);
+        setBookings(bookingsData || []);
+        setSeatStatus(seatData || []);
+        setPickupPoints(pickupData || []);
+        setDestinations(destinationsData || []);
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
@@ -137,85 +112,6 @@ const AdminDashboard: React.FC = () => {
 
     fetchData();
   }, []);
-
-  const toggleSeatAvailability = async (seatNumber: number) => {
-    const { data, error } = await supabase
-      .from('seat_status')
-      .update({ is_available: !seatStatus.find(s => s.seat_number === seatNumber)?.is_available })
-      .eq('seat_number', seatNumber)
-      .select();
-
-    if (error) throw error;
-    setSeatStatus(prev => prev.map(s => s.seat_number === seatNumber ? data[0] : s));
-  };
-
-  const createPickupPoint = async (point: { name: string }) => {
-    const { data, error } = await supabase
-      .from('pickup_points')
-      .insert([{ ...point, active: true }])
-      .select();
-
-    if (error) throw error;
-    setPickupPoints(prev => [...prev, data[0]]);
-  };
-
-  const createDestination = async (dest: { name: string; price: number }) => {
-    const { data, error } = await supabase
-      .from('destinations')
-      .insert([{ ...dest, active: true }])
-      .select();
-
-    if (error) throw error;
-    setDestinations(prev => [...prev, data[0]]);
-  };
-
-  const updatePickupPoint = async (id: string, updates: { name: string }) => {
-    const { data, error } = await supabase
-      .from('pickup_points')
-      .update(updates)
-      .eq('id', id)
-      .select();
-
-    if (error) throw error;
-    setPickupPoints(prev => prev.map(p => p.id === id ? data[0] : p));
-  };
-
-  const updateDestination = async (id: string, updates: { name: string; price: number }) => {
-    const { data, error } = await supabase
-      .from('destinations')
-      .update(updates)
-      .eq('id', id)
-      .select();
-
-    if (error) throw error;
-    setDestinations(prev => prev.map(d => d.id === id ? data[0] : d));
-  };
-
-  const deletePickupPoint = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this pickup point?')) return;
-    
-    const { error } = await supabase
-      .from('pickup_point')  // Corrected table name
-      .delete()
-      .eq('id', id);
-
-    if (error) throw error;
-    setPickupPoints(prev => prev.filter(p => p.id !== id));
-    await logActivity('PICKUP_POINT_DELETED', `Deleted pickup point`, { pickup_point_id: id });
-  };
-
-  const deleteDestination = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this destination?')) return;
-    
-    const { error } = await supabase
-      .from('destination')  // Corrected table name
-      .delete()
-      .eq('id', id);
-
-    if (error) throw error;
-    setDestinations(prev => prev.filter(d => d.id !== id));
-    await logActivity('DESTINATION_DELETED', `Deleted destination`, { destination_id: id });
-  };
 
   const fetchAdminInfo = async () => {
     try {
@@ -304,24 +200,6 @@ const AdminDashboard: React.FC = () => {
   // Get seat occupancy by status
   const approvedSeats = occupiedSeatsWithDetails.filter(s => s.booking?.status === 'approved').length;
   const pendingSeats = occupiedSeatsWithDetails.filter(s => s.booking?.status === 'pending').length;
-
-  const updateBookingStatus = async (id: string, status: 'approved' | 'cancelled') => {
-    try {
-      const { error } = await supabase
-        .from('bookings')
-        .update({ status })
-        .eq('id', id);
-
-      if (error) throw error;
-      
-      // Update local state
-      setBookings(prev => prev.map(b => 
-        b.id === id ? { ...b, status } : b
-      ));
-    } catch (error) {
-      throw error; // Rethrow for error handling in calling function
-    }
-  };
 
   const handleApproveBooking = async (id: string) => {
     try {
@@ -519,13 +397,7 @@ const AdminDashboard: React.FC = () => {
             <div className="bg-blue-100 p-3 rounded-lg">
               <Users className="w-6 h-6 text-blue-600" />
             </div>
-            <div className="flex flex-col">
-              <span className="text-2xl font-bold text-gray-900">{bookings.length}</span>
-              <div className="text-xs font-medium space-x-1">
-                <span className="text-green-600">{approvedBookings.length} approved</span>
-                <span className="text-yellow-600">{pendingBookings.length} pending</span>
-              </div>
-            </div>
+            <span className="text-2xl font-bold text-gray-900">{bookings.length}</span>
           </div>
           <h3 className="text-gray-600 font-medium">Total Bookings</h3>
           <div className="mt-2 flex gap-4 text-sm">
@@ -774,7 +646,7 @@ const AdminDashboard: React.FC = () => {
         <div>
           <h2 className="text-xl font-semibold text-gray-900">Approved Bookings</h2>
           <p className="text-gray-600 mt-1">
-            {approvedBookings.length} approved • {pendingBookings.length} pending • GHS {totalRevenue.toFixed(2)} revenue
+            {approvedBookings.length} approved bookings • GHS {totalRevenue.toFixed(2)} total revenue
           </p>
         </div>
         <div className="flex gap-2">
@@ -1221,38 +1093,20 @@ const AdminDashboard: React.FC = () => {
                   </div>
                 ) : (
                   <div className="flex justify-between items-center">
-                    <div className="flex-1">
+                    <div>
                       <h3 className="font-medium text-gray-900">{point.name}</h3>
-                      <div className="text-sm text-gray-600 mt-1">
-                        <div className="flex items-center gap-1">
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            point.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                          }`}>
-                            {point.active ? 'Active' : 'Inactive'}
-                          </span>
-                          <span className="text-xs text-gray-500">
-                            Created: {new Date(point.created_at).toLocaleDateString()}
-                          </span>
-                        </div>
-                        <div className="mt-1 text-xs text-gray-500">
-                          Associated bookings: {bookings.filter(b => b.pickup_point_id === point.id).length}
-                        </div>
-                      </div>
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                        point.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                      }`}>
+                        {point.active ? 'Active' : 'Inactive'}
+                      </span>
                     </div>
-                    <div className="flex gap-1">
-                      <button
-                        onClick={() => handleEditItem(point, 'pickup')}
-                        className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => deletePickupPoint(point.id)}
-                        className="p-2 text-gray-400 hover:text-red-600 transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
+                    <button
+                      onClick={() => handleEditItem(point, 'pickup')}
+                      className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
                   </div>
                 )}
               </div>
@@ -1372,39 +1226,21 @@ const AdminDashboard: React.FC = () => {
                   </div>
                 ) : (
                   <div className="flex justify-between items-start">
-                    <div className="flex-1">
+                    <div>
                       <h3 className="font-medium text-gray-900">{destination.name}</h3>
                       <p className="text-lg font-bold text-green-600">GHS {destination.price}</p>
-                      <div className="text-sm text-gray-600 mt-1">
-                        <div className="flex items-center gap-1">
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            destination.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                          }`}>
-                            {destination.active ? 'Active' : 'Inactive'}
-                          </span>
-                          <span className="text-xs text-gray-500">
-                            Created: {new Date(destination.created_at).toLocaleDateString()}
-                          </span>
-                        </div>
-                        <div className="mt-1 text-xs text-gray-500">
-                          Associated bookings: {bookings.filter(b => b.destination_id === destination.id).length}
-                        </div>
-                      </div>
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                        destination.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                      }`}>
+                        {destination.active ? 'Active' : 'Inactive'}
+                      </span>
                     </div>
-                    <div className="flex gap-1">
-                      <button
-                        onClick={() => handleEditItem(destination, 'destination')}
-                        className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => deleteDestination(destination.id)}
-                        className="p-2 text-gray-400 hover:text-red-600 transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
+                    <button
+                      onClick={() => handleEditItem(destination, 'destination')}
+                      className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
                   </div>
                 )}
               </div>
@@ -1471,19 +1307,11 @@ const AdminDashboard: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center space-y-4">
-        <Loader2 className="w-16 h-16 animate-spin text-blue-600" />
-        <h2 className="text-xl font-semibold text-gray-900">Loading Admin Dashboard</h2>
-        <p className="text-gray-600 max-w-md text-center">
-          Loading transportation data, bookings, and system configuration...
-        </p>
-        <div className="h-1.5 w-48 bg-blue-100 rounded-full overflow-hidden">
-          <div className="w-full h-full bg-blue-600 animate-progress origin-left" 
-               style={{animation: 'progress 2s ease-in-out infinite'}} />
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="flex items-center gap-3">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+          <span className="text-lg text-gray-600">Loading dashboard...</span>
         </div>
-        <p className="text-sm text-gray-500 mt-4">
-          This may take a moment. Please don't close this page.
-        </p>
       </div>
     );
   }
