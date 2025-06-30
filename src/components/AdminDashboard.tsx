@@ -166,6 +166,32 @@ const AdminDashboard: React.FC = () => {
     setDestinations(prev => prev.map(d => d.id === id ? data[0] : d));
   };
 
+  const deletePickupPoint = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this pickup point?')) return;
+    
+    const { error } = await supabase
+      .from('pickup_points')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+    setPickupPoints(prev => prev.filter(p => p.id !== id));
+    await logActivity('PICKUP_POINT_DELETED', `Deleted pickup point`, { pickup_point_id: id });
+  };
+
+  const deleteDestination = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this destination?')) return;
+    
+    const { error } = await supabase
+      .from('destinations')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+    setDestinations(prev => prev.filter(d => d.id !== id));
+    await logActivity('DESTINATION_DELETED', `Deleted destination`, { destination_id: id });
+  };
+
   const fetchAdminInfo = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -468,7 +494,13 @@ const AdminDashboard: React.FC = () => {
             <div className="bg-blue-100 p-3 rounded-lg">
               <Users className="w-6 h-6 text-blue-600" />
             </div>
-            <span className="text-2xl font-bold text-gray-900">{bookings.length}</span>
+            <div className="flex flex-col">
+              <span className="text-2xl font-bold text-gray-900">{bookings.length}</span>
+              <div className="text-xs font-medium space-x-1">
+                <span className="text-green-600">{approvedBookings.length} approved</span>
+                <span className="text-yellow-600">{pendingBookings.length} pending</span>
+              </div>
+            </div>
           </div>
           <h3 className="text-gray-600 font-medium">Total Bookings</h3>
           <div className="mt-2 flex gap-4 text-sm">
@@ -1172,12 +1204,20 @@ const AdminDashboard: React.FC = () => {
                         {point.active ? 'Active' : 'Inactive'}
                       </span>
                     </div>
-                    <button
-                      onClick={() => handleEditItem(point, 'pickup')}
-                      className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </button>
+                    <div className="flex gap-1">
+                      <button
+                        onClick={() => handleEditItem(point, 'pickup')}
+                        className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => deletePickupPoint(point.id)}
+                        className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -1306,12 +1346,20 @@ const AdminDashboard: React.FC = () => {
                         {destination.active ? 'Active' : 'Inactive'}
                       </span>
                     </div>
-                    <button
-                      onClick={() => handleEditItem(destination, 'destination')}
-                      className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </button>
+                    <div className="flex gap-1">
+                      <button
+                        onClick={() => handleEditItem(destination, 'destination')}
+                        className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => deleteDestination(destination.id)}
+                        className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
