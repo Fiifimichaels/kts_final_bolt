@@ -113,6 +113,59 @@ const AdminDashboard: React.FC = () => {
     fetchData();
   }, []);
 
+  const toggleSeatAvailability = async (seatNumber: number) => {
+    const { data, error } = await supabase
+      .from('seat_status')
+      .update({ is_available: !seatStatus.find(s => s.seat_number === seatNumber)?.is_available })
+      .eq('seat_number', seatNumber)
+      .select();
+
+    if (error) throw error;
+    setSeatStatus(prev => prev.map(s => s.seat_number === seatNumber ? data[0] : s));
+  };
+
+  const createPickupPoint = async (point: { name: string }) => {
+    const { data, error } = await supabase
+      .from('pickup_points')
+      .insert([{ ...point, active: true }])
+      .select();
+
+    if (error) throw error;
+    setPickupPoints(prev => [...prev, data[0]]);
+  };
+
+  const createDestination = async (dest: { name: string; price: number }) => {
+    const { data, error } = await supabase
+      .from('destinations')
+      .insert([{ ...dest, active: true }])
+      .select();
+
+    if (error) throw error;
+    setDestinations(prev => [...prev, data[0]]);
+  };
+
+  const updatePickupPoint = async (id: string, updates: { name: string }) => {
+    const { data, error } = await supabase
+      .from('pickup_points')
+      .update(updates)
+      .eq('id', id)
+      .select();
+
+    if (error) throw error;
+    setPickupPoints(prev => prev.map(p => p.id === id ? data[0] : p));
+  };
+
+  const updateDestination = async (id: string, updates: { name: string; price: number }) => {
+    const { data, error } = await supabase
+      .from('destinations')
+      .update(updates)
+      .eq('id', id)
+      .select();
+
+    if (error) throw error;
+    setDestinations(prev => prev.map(d => d.id === id ? data[0] : d));
+  };
+
   const fetchAdminInfo = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
