@@ -136,7 +136,9 @@ const AdminDashboard: React.FC = () => {
         *,
         pickup_point:pickup_points(*),
         destination:destinations(*)
-      `).order('created_at', { ascending: false }),
+      `)
+      .order('updated_at', { ascending: false })
+      .order('created_at', { ascending: false }),
       supabase.from('seat_status').select('*'),
       supabase.from('pickup_points').select('*'),
       supabase.from('destinations').select('*'),
