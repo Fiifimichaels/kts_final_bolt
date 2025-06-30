@@ -6,6 +6,8 @@ import { BusBooking, PickupPoint, Destination, SeatStatus, BookingFormData } fro
 interface AppContextType {
   // Data
   pickupPoints: PickupPoint[];
+  // Methods
+  updateBookingStatus: (bookingId: string, status: 'approved' | 'cancelled') => Promise<void>;
   destinations: Destination[];
   bookings: BusBooking[];
   seatStatus: SeatStatus[];

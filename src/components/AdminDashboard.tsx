@@ -374,7 +374,8 @@ const AdminDashboard: React.FC = () => {
   const getActivityIcon = (action: string) => {
     switch (action) {
       case 'BOOKING_APPROVED': return <CheckCircle className="w-4 h-4 text-green-600" />;
-      case 'BOOKING_REJECTED': return <XCircle className="w-4 h-4 text-red-600" />;
+      case 'BOOKING_REJECTED': 
+      case 'BOOKING_CANCELLED': return <XCircle className="w-4 h-4 text-red-600" />;
       case 'BOOKING_DELETED': return <Trash2 className="w-4 h-4 text-red-600" />;
       case 'PICKUP_POINT_CREATED':
       case 'PICKUP_POINT_UPDATED': return <MapPin className="w-4 h-4 text-blue-600" />;
@@ -1235,12 +1236,20 @@ const AdminDashboard: React.FC = () => {
                         {destination.active ? 'Active' : 'Inactive'}
                       </span>
                     </div>
-                    <button
-                      onClick={() => handleEditItem(destination, 'destination')}
-                      className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </button>
+                    <div className="flex gap-1">
+                      <button
+                        onClick={() => handleEditItem(destination, 'destination')}
+                        className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => deleteDestination(destination.id)}
+                        className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>

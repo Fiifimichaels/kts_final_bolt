@@ -34,7 +34,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin, onBack }) => {
       if (success) {
         onLogin();
       } else {
-        setError('Invalid credentials or you are not authorized as an admin. Please ensure your email is registered in the admin system.');
+        setError('Invalid credentials or you are not authorized as an admin. Please ensure your email is registered as an administrator.');
       }
     } catch (err) {
       setError('Login failed. Please check your connection and try again.');
