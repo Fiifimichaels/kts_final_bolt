@@ -1102,12 +1102,20 @@ const AdminDashboard: React.FC = () => {
                         {point.active ? 'Active' : 'Inactive'}
                       </span>
                     </div>
-                    <button
-                      onClick={() => handleEditItem(point, 'pickup')}
-                      className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </button>
+                    <div className="flex gap-1">
+                      <button
+                        onClick={() => handleEditItem(point, 'pickup')}
+                        className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => deletePickupPoint(point.id)}
+                        className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
