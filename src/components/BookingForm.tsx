@@ -262,54 +262,16 @@ const BookingForm: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 flex items-center justify-center p-4">
+      <div className="min-h-screen flex items-center justify-center p-4">
         <div className="text-center space-y-4">
-          <div className="flex items-center justify-center gap-3">
-            <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-            <span className="text-lg text-gray-600">
-              Loading booking system
-              <span className="bouncing-dots">
-                <span className="dot">.</span>
-                <span className="dot">.</span>
-                <span className="dot">.</span>
-              </span>
-            </span>
-          </div>
-          <div className="relative pt-4">
-            <div className="h-1.5 w-48 bg-blue-100 rounded-full mx-auto overflow-hidden">
-              <div className="w-full h-full bg-blue-600 rounded-full origin-left animate-progress"></div>
-            </div>
-          </div>
-          <p className="text-sm text-gray-500 mt-4">
-            This may take a few moments. Please don't close this page.
+          <Loader2 className="w-16 h-16 animate-spin text-blue-600 mx-auto" />
+          <h2 className="text-xl font-semibold text-gray-900">
+            Loading Booking System
+          </h2>
+          <p className="text-gray-600 max-w-md mx-auto">
+            Preparing your booking experience...
           </p>
         </div>
-        <style jsx>{`
-          @keyframes progress {
-            from { transform: scaleX(0); }
-            to { transform: scaleX(1); }
-          }
-          .animate-progress {
-            animation: progress 2s ease-in-out infinite;
-          }
-          .bouncing-dots {
-            display: inline-block;
-          }
-          .bouncing-dots .dot {
-            display: inline-block;
-            animation: bounce 0.8s infinite;
-          }
-          .bouncing-dots .dot:nth-child(2) {
-            animation-delay: 0.2s;
-          }
-          .bouncing-dots .dot:nth-child(3) {
-            animation-delay: 0.4s;
-          }
-          @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-3px); }
-          }
-        `}</style>
       </div>
     );
   }
