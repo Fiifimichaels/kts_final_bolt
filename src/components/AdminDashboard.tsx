@@ -254,6 +254,24 @@ const AdminDashboard: React.FC = () => {
   const approvedSeats = occupiedSeatsWithDetails.filter(s => s.booking?.status === 'approved').length;
   const pendingSeats = occupiedSeatsWithDetails.filter(s => s.booking?.status === 'pending').length;
 
+  const updateBookingStatus = async (id: string, status: 'approved' | 'cancelled') => {
+    try {
+      const { error } = await supabase
+        .from('bookings')
+        .update({ status })
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      // Update local state
+      setBookings(prev => prev.map(b => 
+        b.id === id ? { ...b, status } : b
+      ));
+    } catch (error) {
+      throw error; // Rethrow for error handling in calling function
+    }
+  };
+
   const handleApproveBooking = async (id: string) => {
     try {
       setActionLoading(id);
