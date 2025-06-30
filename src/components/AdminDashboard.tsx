@@ -1221,13 +1221,23 @@ const AdminDashboard: React.FC = () => {
                   </div>
                 ) : (
                   <div className="flex justify-between items-center">
-                    <div>
+                    <div className="flex-1">
                       <h3 className="font-medium text-gray-900">{point.name}</h3>
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        point.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                      }`}>
-                        {point.active ? 'Active' : 'Inactive'}
-                      </span>
+                      <div className="text-sm text-gray-600 mt-1">
+                        <div className="flex items-center gap-1">
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                            point.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          }`}>
+                            {point.active ? 'Active' : 'Inactive'}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            Created: {new Date(point.created_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <div className="mt-1 text-xs text-gray-500">
+                          Associated bookings: {bookings.filter(b => b.pickup_point_id === point.id).length}
+                        </div>
+                      </div>
                     </div>
                     <div className="flex gap-1">
                       <button
@@ -1362,14 +1372,24 @@ const AdminDashboard: React.FC = () => {
                   </div>
                 ) : (
                   <div className="flex justify-between items-start">
-                    <div>
+                    <div className="flex-1">
                       <h3 className="font-medium text-gray-900">{destination.name}</h3>
                       <p className="text-lg font-bold text-green-600">GHS {destination.price}</p>
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        destination.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                      }`}>
-                        {destination.active ? 'Active' : 'Inactive'}
-                      </span>
+                      <div className="text-sm text-gray-600 mt-1">
+                        <div className="flex items-center gap-1">
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                            destination.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          }`}>
+                            {destination.active ? 'Active' : 'Inactive'}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            Created: {new Date(destination.created_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <div className="mt-1 text-xs text-gray-500">
+                          Associated bookings: {bookings.filter(b => b.destination_id === destination.id).length}
+                        </div>
+                      </div>
                     </div>
                     <div className="flex gap-1">
                       <button
