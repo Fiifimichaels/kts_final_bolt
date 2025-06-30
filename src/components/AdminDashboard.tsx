@@ -195,7 +195,7 @@ const AdminDashboard: React.FC = () => {
     if (!confirm('Are you sure you want to delete this pickup point?')) return;
     
     const { error } = await supabase
-      .from('pickup_points')
+      .from('pickup_point')  // Corrected table name
       .delete()
       .eq('id', id);
 
@@ -208,7 +208,7 @@ const AdminDashboard: React.FC = () => {
     if (!confirm('Are you sure you want to delete this destination?')) return;
     
     const { error } = await supabase
-      .from('destinations')
+      .from('destination')  // Corrected table name
       .delete()
       .eq('id', id);
 

@@ -61,7 +61,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     try {
       for (const bookingId of bookingIds) {
         const { error } = await supabase
-          .from('bus_bookings')
+          .from('bookings')  // Corrected table name
           .update({
             payment_status: status,
             payment_reference: reference,
@@ -101,7 +101,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
           continue;
         }
 
-        const { data, error } = await supabase.functions.invoke('send-booking-receipt', {
+        const { data, error } = await supabase.functions.invoke('send-booking-receipts', {  // Corrected function name
           body: {
             booking_data: {
               booking_id: bookingData.id,
