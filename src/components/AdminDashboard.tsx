@@ -749,7 +749,7 @@ const AdminDashboard: React.FC = () => {
         <div>
           <h2 className="text-xl font-semibold text-gray-900">Approved Bookings</h2>
           <p className="text-gray-600 mt-1">
-            {approvedBookings.length} approved bookings • GHS {totalRevenue.toFixed(2)} total revenue
+            {approvedBookings.length} approved • {pendingBookings.length} pending • GHS {totalRevenue.toFixed(2)} revenue
           </p>
         </div>
         <div className="flex gap-2">
