@@ -958,3 +958,15 @@
 
 # 2025-06-30 02:53:16.642252
 +the delete buttons should delete and work on the toggle `SeatStatus` in `AdminDashboard.tsx
+
+# 2025-06-30 13:40:25.647127
++Y
+
+# 2025-06-30 13:42:05.373155
++in AdminDashboard.tsx, admin must see successful booking under approved. I realized there was a successful payment but it is not reflecting in the admin page
+
+# 2025-06-30 13:42:07.878385
++Y
+
+# 2025-06-30 13:44:38.384039
++under ocupied seats details, show all the boking info and add an action button to approve or unapproved

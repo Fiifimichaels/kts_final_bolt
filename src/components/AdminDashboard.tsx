@@ -136,9 +136,7 @@ const AdminDashboard: React.FC = () => {
         *,
         pickup_point:pickup_points(*),
         destination:destinations(*)
-      `)
-      .order('updated_at', { ascending: false })
-      .order('created_at', { ascending: false }),
+      `).order('created_at', { ascending: false }),
       supabase.from('seat_status').select('*'),
       supabase.from('pickup_points').select('*'),
       supabase.from('destinations').select('*'),
@@ -638,7 +636,7 @@ const deleteDestination = async (id: string) => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Departure</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th> {/* New Column */}
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -692,25 +690,27 @@ const deleteDestination = async (id: string) => {
                       {seat.booking?.departure_date ? new Date(seat.booking.departure_date).toLocaleDateString() : 'N/A'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                      {seat.booking?.status === 'pending' && (
+                      {seat.booking && seat.booking.status === 'pending' && (
                         <>
                           <button
-                            onClick={() => seat.booking && handleApproveBooking(seat.booking.id)}
-                            disabled={actionLoading === seat.booking?.id}
+                            onClick={() => handleApproveBooking(seat.booking!.id)}
+                            disabled={actionLoading === seat.booking.id}
                             className="text-green-600 hover:text-green-900 disabled:opacity-50"
+                            title="Approve booking"
                           >
-                            {actionLoading === seat.booking?.id ? (
+                            {actionLoading === seat.booking.id ? (
                               <Loader2 className="w-4 h-4 animate-spin" />
                             ) : (
                               <CheckCircle className="w-4 h-4" />
                             )}
                           </button>
                           <button
-                            onClick={() => seat.booking && handleRejectBooking(seat.booking.id)}
-                            disabled={actionLoading === seat.booking?.id}
+                            onClick={() => handleRejectBooking(seat.booking!.id)}
+                            disabled={actionLoading === seat.booking.id}
                             className="text-red-600 hover:text-red-900 disabled:opacity-50"
+                            title="Reject booking"
                           >
-                            {actionLoading === seat.booking?.id ? (
+                            {actionLoading === seat.booking.id ? (
                               <Loader2 className="w-4 h-4 animate-spin" />
                             ) : (
                               <XCircle className="w-4 h-4" />
@@ -718,19 +718,35 @@ const deleteDestination = async (id: string) => {
                           </button>
                         </>
                       )}
-                      {seat.booking && (
+                      {seat.booking && seat.booking.status === 'approved' && (
                         <button
-                          onClick={() => handleDeleteBooking(seat.booking!.id)}
-                          disabled={actionLoading === seat.booking?.id}
+                          onClick={() => handleRejectBooking(seat.booking!.id)}
+                          disabled={actionLoading === seat.booking.id}
                           className="text-red-600 hover:text-red-900 disabled:opacity-50"
+                          title="Cancel approved booking"
                         >
-                          {actionLoading === seat.booking?.id ? (
+                          {actionLoading === seat.booking.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <XCircle className="w-4 h-4" />
+                          )}
+                        </button>
+                      )}
+                      {/* Optionally add a delete button for all statuses if needed, similar to other tables */}
+                       {seat.booking && (
+                         <button
+                          onClick={() => handleDeleteBooking(seat.booking!.id)}
+                          disabled={actionLoading === seat.booking.id}
+                          className="text-gray-600 hover:text-gray-900 disabled:opacity-50"
+                          title="Delete booking"
+                        >
+                          {actionLoading === seat.booking.id ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
                           ) : (
                             <Trash2 className="w-4 h-4" />
                           )}
                         </button>
-                      )}
+                       )}
                     </td>
                   </tr>
                 ))}
@@ -959,13 +975,10 @@ const deleteDestination = async (id: string) => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex flex-col gap-1">
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        <CheckCircle className="w-3 h-3 mr-1" />
-                        Approved
+                        <CheckCircle className="w-3 h-3 mr-1" /> Approved
                       </span>
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        booking.payment_status === 'completed' 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-yellow-100 text-yellow-800'
+                        booking.payment_status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
                       }`}>
                         {booking.payment_status === 'completed' ? '💳 Paid' : '⏳ Pending'}
                       </span>
@@ -1146,73 +1159,79 @@ const deleteDestination = async (id: string) => {
     <div className="bg-white rounded-xl shadow-lg border border-gray-200">
       <div className="p-6 border-b border-gray-200 flex justify-between items-center">
         <div>
-          <h2 className="text-xl font-semibold text-gray-900">Admin Activity Log</h2>
-          <p className="text-gray-600 mt-1">Track all administrative actions and system events</p>
+          <h2 className="text-xl font-semibold text-gray-900">Recent Admin Activity</h2>
+          <p className="text-gray-600 mt-1">
+            Overview of recent actions taken by administrators.
+          </p>
         </div>
         <button
           onClick={fetchActivities}
           disabled={activitiesLoading}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
         >
           {activitiesLoading ? (
             <Loader2 className="w-4 h-4 animate-spin" />
           ) : (
             <Activity className="w-4 h-4" />
           )}
-          Refresh
+          Refresh Activity
         </button>
       </div>
-      
-      <div className="p-6">
-        {activitiesLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-            <span className="ml-2 text-gray-600">Loading activities...</span>
-          </div>
-        ) : activities.length === 0 ? (
-          <div className="text-center py-8">
-            <Activity className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No activities yet</h3>
-            <p className="text-gray-600">Admin activities will appear here as they occur</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {activities.map((activity) => (
-              <div key={activity.id} className="flex items-start gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                <div className="flex-shrink-0 mt-1">
-                  {getActivityIcon(activity.action)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium text-gray-900">
-                      {activity.description}
-                    </p>
-                    <time className="text-xs text-gray-500">
-                      {new Date(activity.created_at).toLocaleString()}
-                    </time>
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Admin</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {activities.length === 0 && !activitiesLoading ? (
+              <tr>
+                <td colSpan={4} className="px-6 py-12 text-center text-gray-500">
+                  <div className="flex flex-col items-center">
+                    <Activity className="w-16 h-16 text-gray-300 mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No recent activity</h3>
+                    <p className="text-gray-600">Admin actions will be logged here.</p>
                   </div>
-                  <div className="mt-1 flex items-center gap-4 text-xs text-gray-500">
-                    <span className="flex items-center gap-1">
-                      <User className="w-3 h-3" />
-                      {activity.admin?.full_name || activity.admin?.email || 'Unknown Admin'}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Activity className="w-3 h-3" />
-                      {activity.action.replace(/_/g, ' ').toLowerCase()}
-                    </span>
-                  </div>
-                  {activity.metadata && (
-                    <div className="mt-2 text-xs text-gray-600 bg-white p-2 rounded border">
-                      <pre className="whitespace-pre-wrap font-mono">
-                        {JSON.stringify(activity.metadata, null, 2)}
-                      </pre>
+                </td>
+              </tr>
+            ) : activitiesLoading ? (
+              <tr>
+                <td colSpan={4} className="px-6 py-12 text-center text-gray-500">
+                  <Loader2 className="w-8 h-8 animate-spin text-blue-500 mx-auto" />
+                  <p className="mt-4 text-gray-600">Loading activities...</p>
+                </td>
+              </tr>
+            ) : (
+              activities.map((activity) => (
+                <tr key={activity.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center gap-2">
+                      {getActivityIcon(activity.action)}
+                      <span className="text-sm font-medium text-gray-900">
+                        {activity.admin?.full_name || 'Unknown Admin'}
+                      </span>
                     </div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="px-2 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                      {activity.action.replace(/_/g, ' ')}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-900">
+                    {activity.description}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {new Date(activity.created_at).toLocaleString()}
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
     </div>
   );
@@ -1221,477 +1240,313 @@ const deleteDestination = async (id: string) => {
     <div className="space-y-6">
       {/* Pickup Points Management */}
       <div className="bg-white rounded-xl shadow-lg border border-gray-200">
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <MapPin className="w-5 h-5 text-blue-600" />
-              <h2 className="text-xl font-semibold text-gray-900">Pickup Points</h2>
-            </div>
-            <button
-              onClick={() => setNewItemForm({ type: 'pickup', name: '', price: 0 })}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              Add Pickup Point
-            </button>
-          </div>
+        <div className="p-6 border-b border-gray-200 flex justify-between items-center">
+          <h2 className="text-xl font-semibold text-gray-900">Pickup Points Management</h2>
+          <button
+            onClick={() => setNewItemForm({ type: 'pickup', name: '', price: 0 })}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Add New Pickup Point
+          </button>
         </div>
-        
         <div className="p-6">
-          {/* Add New Pickup Point Form */}
           {newItemForm.type === 'pickup' && (
-            <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <div className="flex gap-4 items-end">
-                <div className="flex-1">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Pickup Point Name</label>
-                  <input
-                    type="text"
-                    value={newItemForm.name}
-                    onChange={(e) => setNewItemForm(prev => ({ ...prev, name: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Enter pickup point name"
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={handleCreateNew}
-                    disabled={!newItemForm.name || actionLoading === 'new-item'}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center gap-2"
-                  >
-                    {actionLoading === 'new-item' ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Save className="w-4 h-4" />
-                    )}
-                    Save
-                  </button>
-                  <button
-                    onClick={() => setNewItemForm({ type: null, name: '', price: 0 })}
-                    className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
+            <div className="mb-6 p-4 border border-blue-200 rounded-lg bg-blue-50 flex items-center gap-4">
+              <input
+                type="text"
+                placeholder="New Pickup Point Name"
+                value={newItemForm.name}
+                onChange={(e) => setNewItemForm(prev => ({ ...prev, name: e.target.value }))}
+                className="flex-grow p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              />
+              <button
+                onClick={handleCreateNew}
+                disabled={actionLoading === 'new-item' || !newItemForm.name}
+                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 flex items-center gap-2"
+              >
+                {actionLoading === 'new-item' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                Save
+              </button>
+              <button
+                onClick={() => setNewItemForm({ type: null, name: '', price: 0 })}
+                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-100 flex items-center gap-2"
+              >
+                <X className="w-4 h-4" />
+                Cancel
+              </button>
             </div>
           )}
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-            {pickupPoints.map((point) => (
-              <div key={point.id} className="border border-gray-200 rounded-lg p-4">
-                {editingItem?.id === point.id ? (
-                  <div className="space-y-3">
-                    <input
-                      type="text"
-                      value={editingItem.name}
-                      onChange={(e) => setEditingItem(prev => prev ? { ...prev, name: e.target.value } : null)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                    <div className="flex gap-2">
-                      <button
-                        onClick={handleSaveEdit}
-                        disabled={actionLoading === point.id}
-                        className="flex-1 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                      >
-                        {actionLoading === point.id ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <Save className="w-4 h-4" />
-                        )}
-                      </button>
-                      <button
-                        onClick={() => setEditingItem(null)}
-                        className="px-3 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h3 className="font-medium text-gray-900">{point.name}</h3>
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        point.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                      }`}>
-                        {point.active ? 'Active' : 'Inactive'}
-                      </span>
-                    </div>
-                    <div className="flex gap-1">
-                      <button
-                        onClick={() => handleEditItem(point, 'pickup')}
-                        className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => deletePickupPoint(point.id)}
-                        className="p-2 text-gray-400 hover:text-red-600 transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {pickupPoints.map((point) => (
+                <tr key={point.id}>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {editingItem?.id === point.id && editingItem.type === 'pickup' ? (
+                      <input
+                        type="text"
+                        value={editingItem.name}
+                        onChange={(e) => setEditingItem(prev => prev ? { ...prev, name: e.target.value } : null)}
+                        className="p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    ) : (
+                      <div className="text-sm font-medium text-gray-900">{point.name}</div>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                      point.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                    }`}>
+                      {point.active ? 'Active' : 'Inactive'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    {editingItem?.id === point.id && editingItem.type === 'pickup' ? (
+                      <div className="flex gap-2">
+                        <button
+                          onClick={handleSaveEdit}
+                          disabled={actionLoading === point.id || !editingItem.name}
+                          className="text-green-600 hover:text-green-900 disabled:opacity-50"
+                        >
+                          {actionLoading === point.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                        </button>
+                        <button
+                          onClick={() => setEditingItem(null)}
+                          className="text-gray-600 hover:text-gray-900"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleEditItem(point, 'pickup')}
+                          className="text-indigo-600 hover:text-indigo-900"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => deletePickupPoint(point.id)}
+                          className="text-red-600 hover:text-red-900"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
 
       {/* Destinations Management */}
       <div className="bg-white rounded-xl shadow-lg border border-gray-200">
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <Navigation className="w-5 h-5 text-green-600" />
-              <h2 className="text-xl font-semibold text-gray-900">Destinations</h2>
-            </div>
-            <button
-              onClick={() => setNewItemForm({ type: 'destination', name: '', price: 0 })}
-              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              Add Destination
-            </button>
-          </div>
+        <div className="p-6 border-b border-gray-200 flex justify-between items-center">
+          <h2 className="text-xl font-semibold text-gray-900">Destinations Management</h2>
+          <button
+            onClick={() => setNewItemForm({ type: 'destination', name: '', price: 0 })}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Add New Destination
+          </button>
         </div>
-        
         <div className="p-6">
-          {/* Add New Destination Form */}
           {newItemForm.type === 'destination' && (
-            <div className="mb-6 p-4 bg-green-50 rounded-lg border border-green-200">
-              <div className="flex gap-4 items-end">
-                <div className="flex-1">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Destination Name</label>
-                  <input
-                    type="text"
-                    value={newItemForm.name}
-                    onChange={(e) => setNewItemForm(prev => ({ ...prev, name: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    placeholder="Enter destination name"
-                  />
-                </div>
-                <div className="w-32">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Price (GHS)</label>
-                  <input
-                    type="number"
-                    value={newItemForm.price}
-                    onChange={(e) => setNewItemForm(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    placeholder="0"
-                    min="0"
-                    step="0.01"
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={handleCreateNew}
-                    disabled={!newItemForm.name || newItemForm.price <= 0 || actionLoading === 'new-item'}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center gap-2"
-                  >
-                    {actionLoading === 'new-item' ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Save className="w-4 h-4" />
-                    )}
-                    Save
-                  </button>
-                  <button
-                    onClick={() => setNewItemForm({ type: null, name: '', price: 0 })}
-                    className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
+            <div className="mb-6 p-4 border border-blue-200 rounded-lg bg-blue-50 flex items-center gap-4">
+              <input
+                type="text"
+                placeholder="New Destination Name"
+                value={newItemForm.name}
+                onChange={(e) => setNewItemForm(prev => ({ ...prev, name: e.target.value }))}
+                className="flex-grow p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              />
+              <input
+                type="number"
+                placeholder="Price"
+                value={newItemForm.price}
+                onChange={(e) => setNewItemForm(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
+                className="w-24 p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              />
+              <button
+                onClick={handleCreateNew}
+                disabled={actionLoading === 'new-item' || !newItemForm.name || newItemForm.price <= 0}
+                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 flex items-center gap-2"
+              >
+                {actionLoading === 'new-item' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                Save
+              </button>
+              <button
+                onClick={() => setNewItemForm({ type: null, name: '', price: 0 })}
+                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-100 flex items-center gap-2"
+              >
+                <X className="w-4 h-4" />
+                Cancel
+              </button>
             </div>
           )}
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {destinations.map((destination) => (
-              <div key={destination.id} className="border border-gray-200 rounded-lg p-4">
-                {editingItem?.id === destination.id ? (
-                  <div className="space-y-3">
-                    <input
-                      type="text"
-                      value={editingItem.name}
-                      onChange={(e) => setEditingItem(prev => prev ? { ...prev, name: e.target.value } : null)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    />
-                    <input
-                      type="number"
-                      value={editingItem.price || 0}
-                      onChange={(e) => setEditingItem(prev => prev ? { ...prev, price: parseFloat(e.target.value) || 0 } : null)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                      placeholder="Price (GHS)"
-                      min="0"
-                      step="0.01"
-                    />
-                    <div className="flex gap-2">
-                      <button
-                        onClick={handleSaveEdit}
-                        disabled={actionLoading === destination.id}
-                        className="flex-1 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                      >
-                        {actionLoading === destination.id ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <Save className="w-4 h-4" />
-                        )}
-                      </button>
-                      <button
-                        onClick={() => setEditingItem(null)}
-                        className="px-3 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="font-medium text-gray-900">{destination.name}</h3>
-                      <p className="text-lg font-bold text-green-600">GHS {destination.price}</p>
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        destination.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                      }`}>
-                        {destination.active ? 'Active' : 'Inactive'}
-                      </span>
-                    </div>
-                    <div className="flex gap-1">
-                      <button
-                        onClick={() => handleEditItem(destination, 'destination')}
-                        className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => deleteDestination(destination.id)}
-                        className="p-2 text-gray-400 hover:text-red-600 transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price (GHS)</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {destinations.map((destination) => (
+                <tr key={destination.id}>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {editingItem?.id === destination.id && editingItem.type === 'destination' ? (
+                      <input
+                        type="text"
+                        value={editingItem.name}
+                        onChange={(e) => setEditingItem(prev => prev ? { ...prev, name: e.target.value } : null)}
+                        className="p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    ) : (
+                      <div className="text-sm font-medium text-gray-900">{destination.name}</div>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {editingItem?.id === destination.id && editingItem.type === 'destination' ? (
+                      <input
+                        type="number"
+                        value={editingItem.price}
+                        onChange={(e) => setEditingItem(prev => prev ? { ...prev, price: parseFloat(e.target.value) || 0 } : null)}
+                        className="w-24 p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    ) : (
+                      <div className="text-sm text-gray-900">GHS {destination.price?.toFixed(2)}</div>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                      destination.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                    }`}>
+                      {destination.active ? 'Active' : 'Inactive'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    {editingItem?.id === destination.id && editingItem.type === 'destination' ? (
+                      <div className="flex gap-2">
+                        <button
+                          onClick={handleSaveEdit}
+                          disabled={actionLoading === destination.id || !editingItem.name || editingItem.price! <= 0}
+                          className="text-green-600 hover:text-green-900 disabled:opacity-50"
+                        >
+                          {actionLoading === destination.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                        </button>
+                        <button
+                          onClick={() => setEditingItem(null)}
+                          className="text-gray-600 hover:text-gray-900"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleEditItem(destination, 'destination')}
+                          className="text-indigo-600 hover:text-indigo-900"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => deleteDestination(destination.id)}
+                          className="text-red-600 hover:text-red-900"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
 
       {/* Seat Management */}
       <div className="bg-white rounded-xl shadow-lg border border-gray-200">
         <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center gap-2">
-            <Bus className="w-5 h-5 text-orange-600" />
-            <h2 className="text-xl font-semibold text-gray-900">Seat Management</h2>
-          </div>
+          <h2 className="text-xl font-semibold text-gray-900">Seat Management</h2>
+          <p className="text-gray-600 mt-1">Toggle seat availability. Total 31 seats.</p>
         </div>
-        
-        <div className="p-6">
-          <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
-            {seatStatus.map((seat) => (
-              <div key={seat.id} className="flex flex-col items-center">
-                <button
-                  onClick={() => handleToggleSeat(seat.seat_number)}
-                  disabled={actionLoading === `seat-${seat.seat_number}`}
-                  className={`w-12 h-12 rounded-lg border-2 font-bold text-sm transition-all duration-200 flex items-center justify-center ${
-                    seat.is_available
-                      ? 'bg-green-100 border-green-400 text-green-800 hover:bg-green-200'
-                      : 'bg-red-100 border-red-400 text-red-800 hover:bg-red-200'
-                  } disabled:opacity-50`}
-                >
-                  {actionLoading === `seat-${seat.seat_number}` ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    seat.seat_number
-                  )}
-                </button>
-                <div className="mt-1 flex items-center">
-                  {seat.is_available ? (
-                    <ToggleRight className="w-4 h-4 text-green-600" />
-                  ) : (
-                    <ToggleLeft className="w-4 h-4 text-red-600" />
-                  )}
-                </div>
-                <span className="text-xs text-gray-500 mt-1">
-                  {seat.is_available ? 'Available' : 'Blocked'}
-                </span>
-              </div>
-            ))}
-          </div>
-          
-          <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-            <h3 className="font-medium text-gray-900 mb-2">Seat Management Instructions</h3>
-            <ul className="text-sm text-gray-600 space-y-1">
-              <li>• Click on any seat to toggle its availability</li>
-              <li>• Green seats are available for booking</li>
-              <li>• Red seats are blocked and cannot be booked</li>
-              <li>• Use this to temporarily disable problematic seats</li>
-            </ul>
-          </div>
+        <div className="p-6 grid grid-cols-6 sm:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12 gap-4">
+          {Array.from({ length: 31 }, (_, i) => i + 1).map((seatNumber) => {
+            const seat = seatStatus.find(s => s.seat_number === seatNumber);
+            const isAvailable = seat ? seat.is_available : true; // Default to available if not found
+            
+            return (
+              <button
+                key={seatNumber}
+                onClick={() => handleToggleSeat(seatNumber)}
+                disabled={actionLoading === `seat-${seatNumber}`}
+                className={`relative w-12 h-12 rounded-lg flex items-center justify-center text-lg font-bold transition-all duration-200 
+                  ${isAvailable 
+                    ? 'bg-green-200 text-green-800 hover:bg-green-300' 
+                    : 'bg-red-200 text-red-800 hover:bg-red-300'}
+                  ${actionLoading === `seat-${seatNumber}` ? 'opacity-70 cursor-not-allowed' : ''}
+                `}
+                title={isAvailable ? `Seat ${seatNumber} (Available)` : `Seat ${seatNumber} (Occupied)`}
+              >
+                {actionLoading === `seat-${seatNumber}` ? (
+                  <Loader2 className="w-6 h-6 animate-spin text-gray-500" />
+                ) : (
+                  <>
+                    {seatNumber}
+                    {isAvailable ? (
+                      <CheckCircle className="absolute -top-1 -right-1 w-4 h-4 text-green-600 bg-white rounded-full" />
+                    ) : (
+                      <XCircle className="absolute -top-1 -right-1 w-4 h-4 text-red-600 bg-white rounded-full" />
+                    )}
+                  </>
+                )}
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>
   );
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="flex items-center gap-3">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-          <span className="text-lg text-gray-600">Loading dashboard...</span>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-gray-50 overflow-x-hidden">
-      {/* Beautiful Header */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 max-w-[100vw]">
-        {/* Background Pattern */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute inset-0" style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-          }} />
-        </div>
-        
-        {/* Floating Elements */}
-        <div className="absolute top-10 left-10 w-20 h-20 bg-white bg-opacity-10 rounded-full animate-pulse" />
-        <div className="absolute top-32 right-20 w-16 h-16 bg-white bg-opacity-10 rounded-full animate-pulse delay-1000" />
-        <div className="absolute bottom-20 left-1/4 w-12 h-12 bg-white bg-opacity-10 rounded-full animate-pulse delay-2000" />
-        
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex items-center justify-between">
-            {/* Left side - Logo and Title */}
-            <div className="flex items-center gap-6">
-              <div className="relative">
-                <div className="bg-white bg-opacity-20 backdrop-blur-sm p-4 rounded-2xl shadow-2xl">
-                  <Shield className="w-12 h-12 text-white" />
-                </div>
-                <div className="absolute -top-1 -right-1 bg-green-500 w-5 h-5 rounded-full flex items-center justify-center">
-                  <span className="text-white text-xs font-bold">✓</span>
-                </div>
-              </div>
-              
-              <div>
-                <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
-                  Admin Portal
-                </h1>
-                <p className="text-blue-100 text-lg font-light mt-1">
-                  Khompatek Transport Service Management
-                </p>
-                <div className="flex items-center gap-4 mt-2">
-                  <div className="bg-white bg-opacity-20 backdrop-blur-sm px-3 py-1 rounded-full">
-                    <span className="text-white font-medium text-sm">🛡️ Secure Access</span>
-                  </div>
-                  <div className="bg-white bg-opacity-20 backdrop-blur-sm px-3 py-1 rounded-full">
-                    <span className="text-white font-medium text-sm">📊 Real-time Data</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Right side - Admin Info and Actions */}
-            <div className="flex items-center gap-4">
-              {/* Admin Info Card */}
-              <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-xl p-4 border border-white border-opacity-20">
-                <div className="flex items-center gap-3">
-                  <div className="bg-white bg-opacity-20 p-2 rounded-lg">
-                    <User className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-white font-semibold">
-                      {adminInfo?.full_name || 'Admin User'}
-                    </p>
-                    <p className="text-blue-100 text-sm">
-                      {adminInfo?.email || 'admin@khompatek.com'}
-                    </p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                      <span className="text-blue-100 text-xs">Online</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Quick Stats */}
-              <div className="hidden lg:flex items-center gap-4">
-                <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-lg p-3 text-center">
-                  <div className="text-white font-bold text-lg">{bookings.length}</div>
-                  <div className="text-blue-100 text-xs">Bookings</div>
-                </div>
-                <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-lg p-3 text-center">
-                  <div className="text-white font-bold text-lg">{approvedBookings.length}</div>
-                  <div className="text-blue-100 text-xs">Approved</div>
-                </div>
-                <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-lg p-3 text-center">
-                  <div className="text-white font-bold text-lg">GHS {totalRevenue.toFixed(0)}</div>
-                  <div className="text-blue-100 text-xs">Revenue</div>
-                </div>
-              </div>
-
-              {/* Logout Button */}
-              <button
-                onClick={logout}
-                className="bg-red-500 bg-opacity-20 backdrop-blur-sm text-white px-4 py-2 rounded-lg border border-red-400 border-opacity-30 hover:bg-red-500 hover:bg-opacity-30 transition-all duration-200 flex items-center gap-2"
-              >
-                <LogOut className="w-4 h-4" />
-                <span className="hidden sm:inline">Logout</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Performance Indicators */}
-          <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-            <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-lg p-3 text-center">
-              <div className="flex items-center justify-center gap-2 mb-1">
-                <TrendingUp className="w-4 h-4 text-green-300" />
-                <span className="text-white font-semibold text-sm">Performance</span>
-              </div>
-              <div className="text-green-300 text-xs">Excellent</div>
-            </div>
-            <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-lg p-3 text-center">
-              <div className="flex items-center justify-center gap-2 mb-1">
-                <Award className="w-4 h-4 text-yellow-300" />
-                <span className="text-white font-semibold text-sm">Efficiency</span>
-              </div>
-              <div className="text-yellow-300 text-xs">98.5%</div>
-            </div>
-            <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-lg p-3 text-center">
-              <div className="flex items-center justify-center gap-2 mb-1">
-                <Star className="w-4 h-4 text-blue-300" />
-                <span className="text-white font-semibold text-sm">Rating</span>
-              </div>
-              <div className="text-blue-300 text-xs">4.9/5</div>
-            </div>
-            <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-lg p-3 text-center">
-              <div className="flex items-center justify-center gap-2 mb-1">
-                <Clock className="w-4 h-4 text-purple-300" />
-                <span className="text-white font-semibold text-sm">Uptime</span>
-              </div>
-              <div className="text-purple-300 text-xs">99.9%</div>
-            </div>
+    <div className="min-h-screen bg-gray-100">
+      <header className="bg-white shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
+          <div className="flex items-center gap-4">
+            {adminInfo && (
+              <span className="text-gray-700 text-sm font-medium">
+                Welcome, {adminInfo.full_name}
+              </span>
+            )}
+            <button
+              onClick={logout}
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Logout
+            </button>
           </div>
         </div>
-        
-        {/* Wave Bottom */}
-        <div className="absolute bottom-0 left-0 right-0">
-          <svg viewBox="0 0 1200 120" preserveAspectRatio="none" className="w-full h-8 sm:h-12">
-            <path d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z" opacity=".25" fill="currentColor" className="text-gray-50"></path>
-            <path d="M0,0V15.81C13,36.92,27.64,56.86,47.69,72.05,99.41,111.27,165,111,224.58,91.58c31.15-10.15,60.09-26.07,89.67-39.8,40.92-19,84.73-46,130.83-49.67,36.26-2.85,70.9,9.42,98.6,31.56,31.77,25.39,62.32,62,103.63,73,40.44,10.79,81.35-6.69,119.13-24.28s75.16-39,116.92-43.05c59.73-5.85,113.28,22.88,168.9,38.84,30.2,8.66,59,6.17,87.09-7.5,22.43-10.89,48-26.93,60.65-49.24V0Z" opacity=".5" fill="currentColor" className="text-gray-50"></path>
-            <path d="M0,0V5.63C149.93,59,314.09,71.32,475.83,42.57c43-7.64,84.23-20.12,127.61-26.46,59-8.63,112.48,12.24,165.56,35.4C827.93,77.22,886,95.24,951.2,90c86.53-7,172.46-45.71,248.8-84.81V0Z" fill="currentColor" className="text-gray-50"></path>
-          </svg>
-        </div>
-      </div>
+      </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Navigation Tabs */}
-        <div className="mb-8">
-          <div className="border-b border-gray-200">
+      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+          <div className="px-4 sm:px-6">
             <nav className="-mb-px flex flex-wrap gap-x-8 px-4 sm:px-0">
               {[
                 { key: 'overview', label: 'Overview', icon: BarChart3 },
@@ -1723,7 +1578,7 @@ const deleteDestination = async (id: string) => {
         {activeTab === 'approved' && renderApproved()}
         {activeTab === 'activity' && renderActivity()}
         {activeTab === 'management' && renderManagement()}
-      </div>
+      </main>
     </div>
   );
 };
