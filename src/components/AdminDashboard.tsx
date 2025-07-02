@@ -246,10 +246,6 @@ const AdminDashboard: React.FC = () => {
   const pendingSeats = occupiedSeatsWithDetails.filter(s => s.booking?.status === 'pending').length;
   const occupiedSeats = occupiedSeatsWithDetails.length;
 
-  // Get seat occupancy by status
-  const approvedSeats = occupiedSeatsWithDetails.filter(s => s.booking?.status === 'approved').length;
-  const pendingSeats = occupiedSeatsWithDetails.filter(s => s.booking?.status === 'pending').length;
-
   const handleApproveBooking = async (id: string) => {
     try {
       setActionLoading(id);
