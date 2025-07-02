@@ -230,17 +230,20 @@ const AdminDashboard: React.FC = () => {
   const pendingRevenue = pendingBookings.reduce((sum, b) => sum + (b.amount || 0), 0);
   
   // Get occupied seats with booking details
-  const occupiedSeatsWithDetails = seatStatus
-    .filter(s => !s.is_available)
-    .map(seat => {
-      const booking = bookings.find(b => b.seat_number === seat.seat_number);
+  const occupiedSeatsWithDetails = bookings
+    .map(booking => {
+      const seat = seatStatus.find(s => s.seat_number === booking.seat_number);
       return {
-        ...seat,
-        booking: booking || null
+        ...(seat || { id: '', seat_number: booking.seat_number, is_available: false }),
+        booking: booking,
+        passenger_name: booking.full_name
       };
     })
     .sort((a, b) => a.seat_number - b.seat_number);
 
+  // Get seat counts by status
+  const approvedSeats = occupiedSeatsWithDetails.filter(s => s.booking?.status === 'approved').length;
+  const pendingSeats = occupiedSeatsWithDetails.filter(s => s.booking?.status === 'pending').length;
   const occupiedSeats = occupiedSeatsWithDetails.length;
 
   // Get seat occupancy by status
