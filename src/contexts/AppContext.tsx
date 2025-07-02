@@ -69,10 +69,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // Check if user is admin by verifying both auth and admin table
   const checkAdminStatus = async (userEmail: string): Promise<boolean> => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return false;
+
       const { data: adminData, error: adminError } = await supabase
         .from('admins')
-        .select('email, id')
-        .eq('email', userEmail)
+        .select('id')
+        .eq('id', user.id)
         .maybeSingle();
       
       return !adminError && !!adminData;
@@ -143,16 +146,36 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
       console.log('Attempting login...');
-      const success = await authenticateAdmin(email, password);
-      if (success) {
-        setIsAdminLoggedIn(true);
-        console.log('Login successful');
-        return true;
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (error) {
+        console.error('Login error:', error);
+        setError(error.message);
+        return false;
       }
-      console.log('Login failed');
-      return false;
+
+      // Verify user exists in admins table
+      const { data: adminData, error: adminError } = await supabase
+        .from('admins')
+        .select('*')
+        .eq('id', data.user?.id)
+        .single();
+
+      if (adminError || !adminData) {
+        console.error('Admin check failed:', adminError);
+        setError('User not authorized as administrator');
+        return false;
+      }
+
+      setIsAdminLoggedIn(true);
+      console.log('Login successful');
+      return true;
     } catch (error: any) {
       console.error('Login error:', error);
+      setError(error.message);
       return false;
     }
   };
