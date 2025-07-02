@@ -6,3 +6,4 @@ dist
 .env
 .bolt
 .aider.tags.cache.v4
+.env

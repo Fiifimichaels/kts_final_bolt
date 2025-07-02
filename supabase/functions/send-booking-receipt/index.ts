@@ -1,12 +1,14 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { Resend } from "npm:resend@2.6.0"
+/// <reference types="https://deno.land/x/deno@v1.28.0/lib/deno.d.ts" />
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+// import { Resend } from "npm:resend@2.6.0";
+import { Resend } from "https://esm.sh/resend@2.6.0";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"))
+const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 interface BookingReceiptData {
   booking_id: string;
@@ -490,15 +492,15 @@ Email: michaelquaicoe60@gmail.com
     }
 
     return new Response(
-      JSON.stringify({
-        success: true,
-        message: 'Receipt email sent successfully',
-        email_sent: emailSent,
-        email_result: emailResult,
-        booking_id: booking_data.booking_id,
-        recipient: booking_data.customer_email,
-        from: 'michaelquaicoe60@gmail.com'
-      }),
+        JSON.stringify({
+            success: true,
+            message: "Receipt email sent successfully",
+            email_sent: true,
+            email_result: email,
+            booking_id: booking_data.booking_id,
+            recipient: booking_data.customer_email,
+            from: "michaelquaicoe60@gmail.com",
+        }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,

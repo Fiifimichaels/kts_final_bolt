@@ -970,3 +970,95 @@
 
 # 2025-06-30 13:44:38.384039
 +under ocupied seats details, show all the boking info and add an action button to approve or unapproved
+
+# 2025-07-02 02:46:48.729623
++Y
+
+# 2025-07-02 02:51:57.426812
++AdminDashboard.tsx must display occupied seats details with the information of the passenger, and record it under pending if it's not approved
+
+# 2025-07-02 02:52:16.114690
++Y
+
+# 2025-07-02 03:00:15.732053
++[plugin:vite:react-babel] D:\Coding Apps\React_Apps\kts_final\src\components\AdminDashboard.tsx: Identifier 'approvedSeats' has already been declared. (250:8)
++  253 |   const handleApproveBooking = async (id: string) => {
++D:/Coding Apps/React_Apps/kts_final/src/components/AdminDashboard.tsx:250:8
++251|    const pendingSeats = occupiedSeatsWithDetails.filter(s => s.booking?.status === 'pending').length;
++252|  
++253|    const handleApproveBooking = async (id: string) => {
++   |                                                      ^
++254|      try {
++255|        setActionLoading(id);
+
+# 2025-07-02 03:11:33.362794
++re_N1itZqd1_4Hid7oDpc1q8eyQpVaU2UZfM integerate the resend api key in the supabase\functions\send-booking-receipt\index.tssend-booking-receipt/index.ts
+
+# 2025-07-02 03:12:43.435638
++Y
+
+# 2025-07-02 03:13:22.749312
++/run supabase secrets set RESEND_API_KEY=your_api_key_here
+
+# 2025-07-02 03:13:22.750519
++/run supabase secrets set RESEND_API_KEY=your_api_key_here
+
+# 2025-07-02 03:14:07.252720
++Y
+
+# 2025-07-02 03:14:10.925290
++/run deno add npm:resend@2.6.0
+
+# 2025-07-02 03:14:10.925290
++/run deno add npm:resend@2.6.0
+
+# 2025-07-02 03:14:18.506486
++Y
+
+# 2025-07-02 03:15:17.294899
++it didn't work
+
+# 2025-07-02 03:15:45.253084
++Y
+
+# 2025-07-02 03:15:45.262240
++/run iwr https://deno.land/install.ps1 -useb | iex
+
+# 2025-07-02 03:15:45.262240
++/run iwr https://deno.land/install.ps1 -useb | iex
+
+# 2025-07-02 03:15:48.442798
++Y
+
+# 2025-07-02 03:15:50.663628
++/run deno install --allow-run --allow-read https://deno.land/x/supabase@0.9.15/cli.ts
+
+# 2025-07-02 03:15:50.663628
++/run deno install --allow-run --allow-read https://deno.land/x/supabase@0.9.15/cli.ts
+
+# 2025-07-02 03:15:54.013780
++Y
+
+# 2025-07-02 03:15:57.166346
++/run deno --version
+
+# 2025-07-02 03:15:57.168289
++/run deno --version
+
+# 2025-07-02 03:15:57.257522
++/run supabase --version
+
+# 2025-07-02 03:15:57.257522
++/run supabase --version
+
+# 2025-07-02 03:15:59.443326
++Y
+
+# 2025-07-02 03:16:14.826613
++/run supabase secrets set RESEND_API_KEY=your_api_key_here
+
+# 2025-07-02 03:16:14.826613
++/run supabase secrets set RESEND_API_KEY=your_api_key_here
+
+# 2025-07-02 03:16:16.757191
++Y
