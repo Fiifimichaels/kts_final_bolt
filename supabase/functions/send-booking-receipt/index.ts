@@ -1,9 +1,12 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { Resend } from "npm:resend@2.6.0"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
+
+const resend = new Resend(Deno.env.get("RESEND_API_KEY"))
 
 interface BookingReceiptData {
   booking_id: string;
@@ -472,47 +475,19 @@ Email: michaelquaicoe60@gmail.com
 © ${new Date().getFullYear()} Khompatek Transport Service (KTS)
     `
 
-    // Here you would integrate with your email service
-    // For demonstration, we'll use a mock email service
-    // In production, integrate with services like:
-    // - Resend
-    // - SendGrid
-    // - Mailgun
-    // - Amazon SES
-    
-    console.log('Sending booking receipt email...')
-    console.log('To:', booking_data.customer_email)
-    console.log('From: michaelquaicoe60@gmail.com')
-    console.log('Subject: Booking Confirmed & Approved - Seat', booking_data.seat_number, '|', booking_data.pickup_point, '→', booking_data.destination)
-    
-    // Example integration with Resend (uncomment and configure when ready):
-    /*
-    const emailResponse = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${Deno.env.get('RESEND_API_KEY')}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: 'Khompatek Transport <michaelquaicoe60@gmail.com>',
-        to: [booking_data.customer_email],
-        subject: `Booking Confirmed & Approved - Seat ${booking_data.seat_number} | ${booking_data.pickup_point} → ${booking_data.destination}`,
-        html: htmlContent,
-        text: textContent,
-        reply_to: 'michaelquaicoe60@gmail.com',
-      }),
-    })
+    // Send email via Resend
+    const { data: email, error } = await resend.emails.send({
+      from: 'Khompatek Transport <bookings@khompatek.com>',
+      to: booking_data.customer_email,
+      subject: `Booking Confirmed & Approved - Seat ${booking_data.seat_number} | ${booking_data.pickup_point} → ${booking_data.destination}`,
+      html: htmlContent,
+      text: textContent,
+      reply_to: 'michaelquaicoe60@gmail.com',
+    });
 
-    if (!emailResponse.ok) {
-      throw new Error(`Email service error: ${emailResponse.statusText}`)
+    if (error) {
+      throw new Error(`Resend API error: ${JSON.stringify(error)}`)
     }
-
-    const emailResult = await emailResponse.json()
-    */
-
-    // For now, simulate successful email sending
-    const emailSent = true
-    const emailResult = { id: 'mock-email-id', status: 'sent' }
 
     return new Response(
       JSON.stringify({
