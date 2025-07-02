@@ -1062,3 +1062,9 @@
 
 # 2025-07-02 03:16:16.757191
 +Y
+
+# 2025-07-02 04:49:31.234030
++AdminLogin.tsx is failing to communicate to supabase. I  cannot login
+
+# 2025-07-02 04:49:35.449356
++Y

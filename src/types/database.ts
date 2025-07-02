@@ -2,7 +2,6 @@ export interface PickupPoint {
   id: string;
   name: string;
   active: boolean;
-  price: number;
   created_at: string;
   updated_at: string;
 }

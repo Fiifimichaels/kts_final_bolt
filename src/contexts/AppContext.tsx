@@ -6,8 +6,6 @@ import { BusBooking, PickupPoint, Destination, SeatStatus, BookingFormData } fro
 interface AppContextType {
   // Data
   pickupPoints: PickupPoint[];
-  // Methods
-  updateBookingStatus: (bookingId: string, status: 'approved' | 'cancelled') => Promise<void>;
   destinations: Destination[];
   bookings: BusBooking[];
   seatStatus: SeatStatus[];
@@ -67,23 +65,24 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   } = useSupabase();
 
   // Check if user is admin by verifying both auth and admin table
-  const checkAdminStatus = async (userEmail: string): Promise<boolean> => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return false;
+  const checkAdminStatus = async (): Promise<boolean> => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return false;
 
-      const { data: adminData, error: adminError } = await supabase
-        .from('admins')
-        .select('id')
-        .eq('id', user.id)
-        .maybeSingle();
-      
-      return !adminError && !!adminData;
-    } catch (err) {
-      console.error('Error checking admin status:', err);
-      return false;
-    }
-  };
+    const { data: adminData, error: adminError } = await supabase
+      .from('admins')
+      .select('id')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    return !adminError && !!adminData;
+  } catch (err) {
+    console.error('Error checking admin status:', err);
+    return false;
+  }
+};
+
 
   // Simplified auth check
   useEffect(() => {
@@ -102,7 +101,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         if (session?.user?.email) {
           console.log('Session found, checking admin status...');
           try {
-            const isAdmin = await checkAdminStatus(session.user.email);
+            const isAdmin = await checkAdminStatus();
             setIsAdminLoggedIn(isAdmin);
             console.log('Admin status:', isAdmin);
           } catch (adminCheckError) {
@@ -131,7 +130,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setIsAdminLoggedIn(false);
       } else if (event === 'SIGNED_IN' && session?.user?.email) {
         try {
-          const isAdmin = await checkAdminStatus(session.user.email);
+          const isAdmin = await checkAdminStatus();
           setIsAdminLoggedIn(isAdmin);
         } catch (error) {
           console.warn('Admin check failed in auth listener:', error);
@@ -146,36 +145,20 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
       console.log('Attempting login...');
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
-
-      if (error) {
-        console.error('Login error:', error);
-        setError(error.message);
+      
+      // Use the more robust authenticateAdmin function
+      const success = await authenticateAdmin(email, password);
+      
+      if (success) {
+        setIsAdminLoggedIn(true);
+        console.log('Login successful');
+        return true;
+      } else {
+        console.error('Login failed: Invalid credentials or user not authorized as admin');
         return false;
       }
-
-      // Verify user exists in admins table
-      const { data: adminData, error: adminError } = await supabase
-        .from('admins')
-        .select('*')
-        .eq('id', data.user?.id)
-        .single();
-
-      if (adminError || !adminData) {
-        console.error('Admin check failed:', adminError);
-        setError('User not authorized as administrator');
-        return false;
-      }
-
-      setIsAdminLoggedIn(true);
-      console.log('Login successful');
-      return true;
     } catch (error: any) {
       console.error('Login error:', error);
-      setError(error.message);
       return false;
     }
   };

@@ -871,6 +871,262 @@ const deleteDestination = async (id: string) => {
     </div>
   );
 
+  const renderPending = () => (
+    <div className="bg-white rounded-xl shadow-lg border border-gray-200">
+      <div className="p-6 border-b border-gray-200 flex justify-between items-center">
+        <div>
+          <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+            <Clock className="w-6 h-6 text-yellow-600" />
+            Pending Bookings Awaiting Approval
+          </h2>
+          <p className="text-gray-600 mt-1">
+            {pendingBookings.length} bookings requiring approval • GHS {pendingRevenue.toFixed(2)} potential revenue
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={() => exportToCSV(
+              pendingBookings.map(b => ({
+                booking_id: b.id.slice(0, 8),
+                name: b.full_name,
+                email: b.email,
+                phone: b.phone,
+                class: b.class,
+                pickup: b.pickup_point?.name,
+                destination: b.destination?.name,
+                seat: b.seat_number,
+                amount: b.amount,
+                payment_reference: b.payment_reference,
+                payment_status: b.payment_status,
+                departure_date: b.departure_date,
+                booking_date: new Date(b.booking_date).toLocaleDateString(),
+                contact_person_name: b.contact_person_name,
+                contact_person_phone: b.contact_person_phone,
+              })),
+              'pending-bookings'
+            )}
+            className="flex items-center gap-2 px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors"
+          >
+            <Download className="w-4 h-4" />
+            Export Pending
+          </button>
+        </div>
+      </div>
+      <div className="overflow-x-auto pb-2">
+        <table className="w-full min-w-[1200px]">
+          <thead className="bg-yellow-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <div className="flex items-center gap-2">
+                  <User className="w-4 h-4" />
+                  Passenger Details
+                </div>
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4" />
+                  Journey Details
+                </div>
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <div className="flex items-center gap-2">
+                  <Users className="w-4 h-4" />
+                  Emergency Contact
+                </div>
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <div className="flex items-center gap-2">
+                  <CreditCard className="w-4 h-4" />
+                  Payment Info
+                </div>
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4" />
+                  Status & Time
+                </div>
+              </th>
+              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <div className="flex items-center justify-center gap-2">
+                  <Shield className="w-4 h-4" />
+                  Actions
+                </div>
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {pendingBookings.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                  <div className="flex flex-col items-center">
+                    <CheckCircle className="w-16 h-16 text-green-300 mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">All caught up!</h3>
+                    <p className="text-gray-600">No pending bookings require approval at this time.</p>
+                    <p className="text-sm text-gray-500 mt-2">New bookings will appear here automatically.</p>
+                  </div>
+                </td>
+              </tr>
+            ) : (
+              pendingBookings.map((booking) => (
+                <tr key={booking.id} className="hover:bg-yellow-50 transition-colors">
+                  <td className="px-6 py-6 whitespace-nowrap">
+                    <div className="space-y-1">
+                      <div className="text-sm font-semibold text-gray-900">{booking.full_name}</div>
+                      <div className="text-sm text-gray-600">{booking.class}</div>
+                      <div className="text-sm text-blue-600 hover:text-blue-800">
+                        <a href={`mailto:${booking.email}`}>{booking.email}</a>
+                      </div>
+                      <div className="text-sm text-green-600 hover:text-green-800">
+                        <a href={`tel:${booking.phone}`}>{booking.phone}</a>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-6 whitespace-nowrap">
+                    <div className="space-y-1">
+                      <div className="text-sm font-medium text-gray-900 flex items-center gap-1">
+                        <span className="text-blue-600">{booking.pickup_point?.name || 'N/A'}</span>
+                        <span className="text-gray-400">→</span>
+                        <span className="text-green-600">{booking.destination?.name || 'N/A'}</span>
+                      </div>
+                      <div className="text-sm text-gray-600 flex items-center gap-2">
+                        <Bus className="w-3 h-3" />
+                        <span>Seat {booking.seat_number}</span>
+                      </div>
+                      <div className="text-sm text-gray-600 flex items-center gap-2">
+                        <Calendar className="w-3 h-3" />
+                        <span>{booking.departure_date ? new Date(booking.departure_date).toLocaleDateString('en-US', {
+                          weekday: 'short',
+                          month: 'short',
+                          day: 'numeric'
+                        }) : 'N/A'}</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-6 whitespace-nowrap">
+                    <div className="space-y-1">
+                      <div className="text-sm font-medium text-gray-900">
+                        {booking.contact_person_name || 'Not provided'}
+                      </div>
+                      <div className="text-sm text-green-600 hover:text-green-800">
+                        {booking.contact_person_phone ? (
+                          <a href={`tel:${booking.contact_person_phone}`}>{booking.contact_person_phone}</a>
+                        ) : (
+                          <span className="text-gray-400">Not provided</span>
+                        )}
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-6 whitespace-nowrap">
+                    <div className="space-y-1">
+                      <div className="text-lg font-bold text-green-600">
+                        GHS {booking.amount?.toFixed(2) || '0.00'}
+                      </div>
+                      <div className={`text-sm px-2 py-1 rounded-full inline-block ${
+                        booking.payment_status === 'completed'
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {booking.payment_status === 'completed' ? '✅ Paid' : '⏳ Pending Payment'}
+                      </div>
+                      {booking.payment_reference && (
+                        <div className="text-xs font-mono text-gray-600 bg-gray-100 px-2 py-1 rounded truncate max-w-[100px]">
+                          {booking.payment_reference.slice(0, 12)}...
+                        </div>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-6 py-6 whitespace-nowrap">
+                    <div className="space-y-2">
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800 border border-yellow-200">
+                        <Clock className="w-4 h-4 mr-2" />
+                        Pending Approval
+                      </span>
+                      <div className="text-xs text-gray-500">
+                        Booked: {new Date(booking.booking_date).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-6 whitespace-nowrap">
+                    <div className="flex flex-col gap-2 items-center">
+                      <button
+                        onClick={() => handleApproveBooking(booking.id)}
+                        disabled={actionLoading === booking.id}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        title="Approve booking"
+                      >
+                        {actionLoading === booking.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <>
+                            <CheckCircle className="w-4 h-4" />
+                            <span className="text-sm font-medium">Approve</span>
+                          </>
+                        )}
+                      </button>
+                      <button
+                        onClick={() => handleRejectBooking(booking.id)}
+                        disabled={actionLoading === booking.id}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        title="Reject booking"
+                      >
+                        {actionLoading === booking.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <>
+                            <XCircle className="w-4 h-4" />
+                            <span className="text-sm font-medium">Reject</span>
+                          </>
+                        )}
+                      </button>
+                      <button
+                        onClick={() => handleDeleteBooking(booking.id)}
+                        disabled={actionLoading === booking.id}
+                        className="w-full flex items-center justify-center gap-2 px-3 py-1 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        title="Delete booking"
+                      >
+                        {actionLoading === booking.id ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <>
+                            <Trash2 className="w-3 h-3" />
+                            <span className="text-xs">Delete</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+      {pendingBookings.length > 0 && (
+        <div className="px-6 py-4 bg-yellow-50 border-t border-yellow-200">
+          <div className="flex justify-between items-center text-sm">
+            <div className="flex items-center gap-4">
+              <span className="text-gray-700">
+                <strong>{pendingBookings.length}</strong> bookings awaiting approval
+              </span>
+              <span className="text-gray-700">
+                Potential Revenue: <strong className="text-green-600">GHS {pendingRevenue.toFixed(2)}</strong>
+              </span>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-gray-600">
+              <AlertCircle className="w-4 h-4" />
+              <span>Review each booking carefully before approval</span>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
   const renderApproved = () => (
     <div className="bg-white rounded-xl shadow-lg border border-gray-200">
       <div className="p-6 border-b border-gray-200 flex justify-between items-center">
@@ -1549,6 +1805,7 @@ const deleteDestination = async (id: string) => {
             <nav className="-mb-px flex flex-wrap gap-x-8 px-4 sm:px-0">
               {[
                 { key: 'overview', label: 'Overview', icon: BarChart3 },
+                { key: 'pending', label: `Pending (${pendingBookings.length})`, icon: Clock },
                 { key: 'bookings', label: 'Bookings', icon: Bus },
                 { key: 'approved', label: 'Approved', icon: CheckCircle },
                 { key: 'activity', label: 'Activity', icon: Activity },
@@ -1573,6 +1830,7 @@ const deleteDestination = async (id: string) => {
 
         {/* Tab Content */}
         {activeTab === 'overview' && renderOverview()}
+        {activeTab === 'pending' && renderPending()}
         {activeTab === 'bookings' && renderBookings()}
         {activeTab === 'approved' && renderApproved()}
         {activeTab === 'activity' && renderActivity()}

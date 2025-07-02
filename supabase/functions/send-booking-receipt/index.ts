@@ -1,14 +1,61 @@
-/// <reference types="https://deno.land/x/deno@v1.28.0/lib/deno.d.ts" />
+// Supabase Edge Function for sending booking receipt emails
+// @deno-types="https://deno.land/std@0.168.0/http/server.ts"
+// @ts-ignore: Deno import resolution
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-// import { Resend } from "npm:resend@2.6.0";
-import { Resend } from "https://esm.sh/resend@2.6.0";
+// @ts-ignore: npm: prefix for Deno
+import { Resend } from "npm:resend@2.6.0";
+
+// Type declarations for Deno runtime
+declare const Deno: {
+  env: {
+    get(key: string): string | undefined;
+  };
+};
+
+// Type declarations needed for Resend
+type ResendEmailOptions = {
+  from: string;
+  to: string;
+  subject: string;
+  html?: string;
+  text?: string;
+  reply_to?: string;
+};
+
+type ResendResponse = {
+  id: string;
+  from: string;
+  to: string[];
+  created_at: string;
+};
+
+type ResendError = {
+  message: string;
+  name: string;
+};
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+// DIAGNOSTIC: Check if RESEND_API_KEY is available
+const resendApiKey = Deno.env.get("RESEND_API_KEY");
+console.log("DIAGNOSTIC: Environment check");
+console.log("RESEND_API_KEY exists:", !!resendApiKey);
+console.log("RESEND_API_KEY length:", resendApiKey?.length || 0);
+
+// DIAGNOSTIC: Test Resend import
+console.log("DIAGNOSTIC: Resend import type:", typeof Resend);
+
+let resend: any;
+try {
+  resend = new Resend(resendApiKey);
+  console.log("DIAGNOSTIC: Resend instance created successfully");
+} catch (error) {
+  console.error("DIAGNOSTIC: Failed to create Resend instance:", error);
+  throw error;
+}
 
 interface BookingReceiptData {
   booking_id: string;
