@@ -29,15 +29,23 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin, onBack }) => {
     setLoading(true);
     setError('');
 
-    try {
+        try {
       const success = await login(credentials.email, credentials.password);
       if (success) {
         onLogin();
       } else {
         setError('Invalid credentials or you are not authorized as an admin. Please ensure your email is registered as an administrator.');
       }
-    } catch (err) {
-      setError('Login failed. Please check your connection and try again.');
+    } catch (err: any) {
+      // Log error details for debugging
+      console.error('Login error:', err);
+      if (err?.response?.data?.message) {
+        setError(`Login failed: ${err.response.data.message}`);
+      } else if (err?.message) {
+        setError(`Login failed: ${err.message}`);
+      } else {
+        setError('Login failed. Please check your connection and try again.');
+      }
     } finally {
       setLoading(false);
     }

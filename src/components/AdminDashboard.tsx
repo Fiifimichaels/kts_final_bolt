@@ -119,36 +119,53 @@ const AdminDashboard: React.FC = () => {
   const [activitiesLoading, setActivitiesLoading] = useState(false);
 
   // Fetch admin info and activities
-  useEffect(() => {
+ useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
         // Fetch all data in parallel
-    const [
-      { data: bookingsData },
-      { data: seatData },
-      { data: pickupData },
-      { data: destinationsData },
-      adminInfo,
-      activities
-    ] = await Promise.all([
-      supabase.from('bookings').select(`
-        *,
-        pickup_point:pickup_points(*),
-        destination:destinations(*)
-      `).order('created_at', { ascending: false }),
-      supabase.from('seat_status').select('*'),
-      supabase.from('pickup_points').select('*'),
-      supabase.from('destinations').select('*'),
-      fetchAdminInfo(),
-      fetchActivities()
-    ]);
+        const [
+          { data: pendingBookingsData }, // Fetch pending bookings separately
+          { data: approvedBookingsData }, // Fetch approved bookings separately
+          { data: seatData },
+          { data: pickupData },
+          { data: destinationsData },
+          adminInfo,
+          activities
+        ] = await Promise.all([
+          supabase.from('bookings')
+            .select(`
+              *,
+              pickup_point:pickup_points(*),
+              destination:destinations(*)
+            `)
+            .eq('status', 'pending') // Filter for pending status
+            .order('created_at', { ascending: false }),
 
+          supabase.from('bookings')
+            .select(`
+              *,
+              pickup_point:pickup_points(*),
+              destination:destinations(*)
+            `)
+            .eq('status', 'approved') // Filter for approved status
+            .order('created_at', { ascending: false }),
 
-        setBookings(bookingsData || []);
+          supabase.from('seat_status').select('*'),
+          supabase.from('pickup_points').select('*'),
+          supabase.from('destinations').select('*'),
+          fetchAdminInfo(),
+          fetchActivities()
+        ]);
+
+        // Combine or set pending and approved bookings separately as needed
+        // For now, let's combine them to maintain the existing structure for other tabs
+        setBookings([...(pendingBookingsData || []), ...(approvedBookingsData || [])]); 
+        
         setSeatStatus(seatData || []);
         setPickupPoints(pickupData || []);
         setDestinations(destinationsData || []);
+
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {

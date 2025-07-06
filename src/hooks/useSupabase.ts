@@ -82,7 +82,7 @@ export const useSupabase = () => {
   const fetchBookings = async () => {
     try {
       const { data, error } = await supabase
-        .from('bookings')
+        .from('bus_bookings')
         .select(`
           *,
           pickup_point:pickup_points(*),
@@ -123,60 +123,23 @@ export const useSupabase = () => {
     try {
       console.log('Attempting admin authentication for:', email);
       
-      // First check if email exists in admins table, if not create it
-      let { data: adminCheck, error: adminCheckError } = await supabase
-        .from('admins')
-        .select('email, id')
-        .eq('email', email)
-        .maybeSingle();
-
-      if (adminCheckError) {
-        console.error('Error checking admin status:', adminCheckError);
-        return false;
-      }
-
-      // If admin doesn't exist, create the record
-      if (!adminCheck) {
-        console.log('Admin record not found, creating for:', email);
-        
-        const { data: insertData, error: insertError } = await supabase
-          .from('admins')
-          .insert([{
-            email: email,
-            full_name: email.includes('fiifi') ? 'Fiifi Michaels Admin' : 'Admin User',
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          }])
-          .select()
-          .single();
-
-        if (insertError) {
-          console.error('Error creating admin record:', insertError);
-          return false;
-        }
-
-        adminCheck = insertData;
-        console.log('Admin record created:', adminCheck);
-      }
-
-      console.log('Admin record found/created:', adminCheck);
-
-      // Attempt to sign in with existing credentials
+      // First attempt to authenticate with existing credentials
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
+      let userId: string;
+
       if (authError) {
-        // If user doesn't exist in auth, try to create them
-        if (authError.message.includes('Invalid login credentials') || authError.message.includes('Email not confirmed')) {
-          console.log('Auth user not found, creating account...');
+        // If user doesn't exist in auth, create new auth user
+        if (authError.message.includes('Invalid login credentials')) {
+          console.log('Creating new admin auth user...');
           
           const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
             email,
             password,
             options: {
-              emailRedirectTo: undefined, // Skip email confirmation for admin
               data: {
                 full_name: 'Admin User',
                 role: 'admin'
@@ -186,53 +149,56 @@ export const useSupabase = () => {
 
           if (signUpError) {
             console.error('Sign up error:', signUpError);
-            return false;
+            throw new Error(`Sign up failed: ${signUpError.message}`);
           }
 
           if (!signUpData.user) {
             console.error('No user returned from sign up');
-            return false;
+            throw new Error('Failed to create user account');
           }
 
-          // Update admin record with the new user's ID
-          const { error: updateError } = await supabase
-            .from('admins')
-            .update({
-              id: signUpData.user.id,
-              updated_at: new Date().toISOString()
-            })
-            .eq('email', email);
-
-          if (updateError) {
-            console.error('Error updating admin record:', updateError);
-          }
-
-          console.log('Admin account created and linked successfully');
-          return true;
+          userId = signUpData.user.id;
+        } else {
+          console.error('Authentication error:', authError);
+          throw new Error(`Authentication failed: ${authError.message}`);
         }
+      } else {
+        if (!authData.user) {
+          console.error('No user returned from sign in');
+          throw new Error('Authentication failed - no user data');
+        }
+        userId = authData.user.id;
+      }
+
+      // Check if user exists in admins table, if not create entry
+      const { data: adminCheck, error: adminCheckError } = await supabase
+        .from('admins')
+        .select('id, email')
+        .eq('email', email)
+        .maybeSingle();
+
+      if (adminCheckError) {
+        console.error('Error checking admin status:', adminCheckError);
+        throw new Error(`Admin verification failed: ${adminCheckError.message}`);
+      }
+
+      // If admin record doesn't exist, create it
+      if (!adminCheck) {
+        console.log('Creating admin record for authenticated user...');
         
-        console.error('Authentication error:', authError);
-        return false;
-      }
-
-      if (!authData.user) {
-        console.error('No user returned from sign in');
-        return false;
-      }
-
-      // Update admin record with the authenticated user's ID if needed
-      if (adminCheck && (!adminCheck.id || adminCheck.id !== authData.user.id)) {
-        const { error: updateError } = await supabase
+        const { error: insertError } = await supabase
           .from('admins')
-          .update({
-            id: authData.user.id,
+          .insert([{
+            id: userId,
+            email: email,
+            full_name: 'Admin User',
+            created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
-          })
-          .eq('email', email);
+          }]);
 
-        if (updateError) {
-          console.error('Error updating admin record:', updateError);
-          // Don't fail if we can't update - the auth was successful
+        if (insertError) {
+          console.error('Error creating admin record:', insertError);
+          throw new Error(`Failed to create admin record: ${insertError.message}`);
         }
       }
 
@@ -241,7 +207,13 @@ export const useSupabase = () => {
 
     } catch (err: any) {
       console.error('Authentication error:', err);
-      return false;
+      // Sign out on any error to clean up state
+      try {
+        await supabase.auth.signOut();
+      } catch (signOutError) {
+        console.error('Error signing out after failed auth:', signOutError);
+      }
+      throw err;
     }
   };
 
@@ -292,7 +264,7 @@ export const useSupabase = () => {
   const updateBookingStatus = async (bookingId: string, status: 'approved' | 'cancelled') => {
     try {
       const { error } = await supabase
-        .from('bookings')
+        .from('bus_bookings')
         .update({ status })
         .eq('id', bookingId);
 
@@ -339,7 +311,7 @@ export const useSupabase = () => {
       const booking = bookings.find(b => b.id === bookingId);
       
       const { error } = await supabase
-        .from('bookings')
+        .from('bus_bookings')
         .delete()
         .eq('id', bookingId);
 

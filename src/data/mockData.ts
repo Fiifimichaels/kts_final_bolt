@@ -1,19 +1,35 @@
-import { PickupPoint, Destination, Passenger, SeatStatus } from '../types';
+import { PickupPoint, Destination, SeatStatus } from '../types'; // Adjust the path as needed
+
+// Define Passenger type if not imported
+export interface Passenger {
+  id: string;
+  fullName: string;
+  class: string;
+  email: string;
+  phone: string;
+  contactPersonName: string;
+  contactPersonPhone: string;
+  pickupPoint: string;
+  busType: string;
+  seatNumber: number;
+  destination: string;
+  amount: number;
+  referral: string;
+  departureDate: string;
+  bookingDate: string;
+  status: string;
+  paymentStatus: string;
+}
 
 export const PICKUP_POINTS: PickupPoint[] = [
   { id: '1', name: 'Apowa', active: true },
-  { id: '2', name: 'Kwesimintsim', active: true },
-  { id: '3', name: 'Apolo', active: true },
   { id: '4', name: 'Fijai', active: true },
 ];
 
 export const DESTINATIONS: Destination[] = [
   { id: '1', name: 'Madina/Adenta', price: 30, active: true },
-  { id: '2', name: 'Accra', price: 40, active: true },
-  { id: '3', name: 'Tema', price: 50, active: true },
-  { id: '4', name: 'Kasoa', price: 70, active: true },
-  { id: '5', name: 'Cape', price: 80, active: true },
-  { id: '6', name: 'Takoradi', price: 60, active: true },
+  { id: '2', name: 'Accra', price: 1, active: true },
+  { id: '3', name: 'Tema', price: 1, active: true },
 ];
 
 export const REFERRALS = ['Kofi', 'Emma', 'Christabel', 'Kelvin', 'Custom'];
@@ -22,8 +38,9 @@ export const CLASS_OPTIONS = ['Level 100', 'Level 200', 'Level 300', 'Level 400'
 
 // Initialize seat status (31 seats + driver)
 export const initialSeatStatus: SeatStatus[] = Array.from({ length: 31 }, (_, index) => ({
-  seatNumber: index + 1,
-  isAvailable: true,
+  id: (index + 1).toString(),
+  seat_number: index + 1,
+  is_available: true,
 }));
 
 // Mock passengers data
